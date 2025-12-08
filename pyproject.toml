@@ -1,0 +1,24 @@
+[project]
+name = "hadrana"
+version = "0.0.1"
+authors = ["Christian Kindler"]
+description = ""
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.3.4",
+    "h5py>=3.15.1",
+    "iminuit>=2.32.0"
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build_backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = "hadrana"
+
+[tool.setuptools.pacakge-dir]
+hadrana = "src/hadrana"
+
+
