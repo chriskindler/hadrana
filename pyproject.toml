@@ -1,7 +1,7 @@
 [project]
 name = "hadrana"
 version = "0.0.1"
-authors = ["Christian Kindler"]
+authors = [{ name = "Christian Kindler"}]
 description = ""
 readme = "README.md"
 requires-python = ">=3.11"
@@ -13,12 +13,10 @@ dependencies = [
 
 [build-system]
 requires = ["setuptools", "wheel"]
-build_backend = "setuptools.build_meta"
+build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = "hadrana"
+packages = ["hadrana"]
 
-[tool.setuptools.pacakge-dir]
+[tool.setuptools.package-dir]
 hadrana = "src/hadrana"
-
-
