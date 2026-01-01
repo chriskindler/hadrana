@@ -82,8 +82,6 @@ def generate_form_factor_data(ensemble_ids: list[str], nsquares: list):
 
         N = get_spatial_extent(id)
 
-        
-
         for j, n in enumerate(nsquares):
             qsquared = n * (2 * np.pi / N) ** 2
             EN_bst = np.sqrt(MN_bst ** 2 + qsquared)
