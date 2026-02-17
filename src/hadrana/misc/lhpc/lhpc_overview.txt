@@ -1,0 +1,249 @@
+// A650r000
+base location for hdf5 files:
+    /glurch/scratch/analysis/CLS/A650/A650r000/run13_nog2/DATA
+
+sequential three-point function data e.g. for config number 100
+    h5ls A650r000n100_run13.h5/rqcd/seq3pt
+
+we have measurement ids meas0 to meas9 
+    for [meas0, meas1, meas2, meas3, meas8] NUCL_U 
+    for [meas4, meas5, meas6, meas7, meas9] NUCL_D
+
+'A650': {
+        'sequential3pt': {
+            7: {
+                'source_set0': { 'src_id': [0, 1, 2], 'src_id is t_src': False },
+            },
+            9: {
+                'source_set0': { 'src_id': [0, 1, 2], 'src_id is t_src': False },
+                'source_set2': { 'src_id': [0, 1, 2], 'src_id is t_src': False },
+            },
+            11: {
+                'source_set0': { 'src_id': [0, 1, 2], 'src_id is t_src': False },
+                'source_set2': { 'src_id': [0, 1, 2, 3, 4, 5, 6, 7, 8], 'src_id is t_src': False },
+            },
+            13: {
+                'source_set0': { 'src_id': [0, 1, 2, 3], 'src_id is t_src': False },
+                'source_set2': { 'src_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], 'src_id is t_src': False },
+            },
+        }
+    },
+
+'A650': {
+        'cls2pt': {
+            'source_set0': { 'src_id': [0, 1, 2, 3], 'src_id is t_src': False }, # run13_nog2
+            'source_set1': { 'src_id': [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23], 'src_id is t_src': False }, # run9
+            'source_set2': { 'src_id': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], 'src_id is t_src': False }, # run13b_nog2
+        }
+    },
+
+hash obtained from lhpc.sh
+
+run13_nog2
+[FLAVOUR U] [meas0, meas1, meas2, meas3, meas8]
+    t = 7 (meas0)
+        [UNPOLARISED]
+            HASH: 73b12658da373187bffaeec5dc7f5c266b167687
+                <seqsource_id>NUCL_U_UNPOL_src37_snk44_mom000_forlhpc</seqsource_id>
+                <seqsource_id>NUCL_U_UNPOL_src5_snk12_mom000_forlhpc</seqsource_id>
+                <seqsource_id>NUCL_U_UNPOL_src21_snk28_mom000_forlhpc</seqsource_id>
+
+        [POLARISED X]
+            HASH: bc640990d59a48632a968daab634801368396cd4
+                'seq_srcs': ['NUCL_U_POLX_src37_snk44_mom000_forlhpc',
+                        'NUCL_U_POLX_src5_snk12_mom000_forlhpc',
+                        'NUCL_U_POLX_src21_snk28_mom000_forlhpc']
+
+        [POLARISED Y]
+            HASH: 915142c4f96ae948de241b45c2e7ed4f3b070f76            
+                'seq_srcs': ['NUCL_U_POLY_src37_snk44_mom000_forlhpc',
+                        'NUCL_U_POLY_src5_snk12_mom000_forlhpc',
+                        'NUCL_U_POLY_src21_snk28_mom000_forlhpc']
+
+    t = 9 (meas1)
+        [UNPOLARISED]
+            HASH: 10ccb41aac70415068da14d9b0b1c4e26a682b8a
+                <seqsource_id>NUCL_U_UNPOL_src37_snk46_mom000_forlhpc</seqsource_id>
+                <seqsource_id>NUCL_U_UNPOL_src5_snk14_mom000_forlhpc</seqsource_id>
+                <seqsource_id>NUCL_U_UNPOL_src21_snk30_mom000_forlhpc</seqsource_id>
+
+        [POLARISED X]
+            HASH: bc6454e1aa844065aca3616b44d003b47de05358
+                'seq_srcs': ['NUCL_U_POLX_src37_snk46_mom000_forlhpc',
+                        'NUCL_U_POLX_src5_snk14_mom000_forlhpc',
+                        'NUCL_U_POLX_src21_snk30_mom000_forlhpc']
+
+        [POLARISED Y]
+            HASH: 9f4e8941affb402d07ee862faa0dafbccb789a7f
+                'seq_srcs': ['NUCL_U_POLY_src37_snk46_mom000_forlhpc',
+                        'NUCL_U_POLY_src5_snk14_mom000_forlhpc',
+                        'NUCL_U_POLY_src21_snk30_mom000_forlhpc']
+
+    t = 11 (meas2)
+        [UNPOLARISED]
+            HASH: e2bb437dac771b82a0402435482f3cb2f2593991
+                <seqsource_id>NUCL_U_UNPOL_src37_snk0_mom000_forlhpc</seqsource_id>
+                <seqsource_id>NUCL_U_UNPOL_src5_snk16_mom000_forlhpc</seqsource_id>
+                <seqsource_id>NUCL_U_UNPOL_src21_snk32_mom000_forlhpc</seqsource_id>
+
+        [POLARISED X]
+            HASH: d8ddafe68ff3e60dba6f681b0c0119ce7b855b3e 
+                'seq_srcs': ['NUCL_U_POLX_src37_snk0_mom000_forlhpc',
+                        'NUCL_U_POLX_src5_snk16_mom000_forlhpc',
+                        'NUCL_U_POLX_src21_snk32_mom000_forlhpc']
+
+        [POLARISED Y]
+            HASH: 7a03a00dc4e4229ce0abb4181c0f30202e242526
+                'seq_srcs': ['NUCL_U_POLX_src37_snk0_mom000_forlhpc',
+                        'NUCL_U_POLX_src5_snk16_mom000_forlhpc',
+                        'NUCL_U_POLX_src21_snk32_mom000_forlhpc']
+
+
+    t = 13 (meas3)
+        [UNPOLARISED]
+            HASH: f0cf834d126338837b47e3e95e30e9092ede5231
+                <seqsource_id>NUCL_U_UNPOL_src37_snk2_mom000_forlhpc</seqsource_id>
+                <seqsource_id>NUCL_U_UNPOL_src5_snk18_mom000_forlhpc</seqsource_id>
+                <seqsource_id>NUCL_U_UNPOL_src21_snk34_mom000_forlhpc</seqsource_id>
+
+        [POLARISED X]
+            HASH: ebb97a7b6e2b6e31c60ccfa93d3ce90fd5881c19
+            'seq_srcs': ['NUCL_U_POLX_src37_snk2_mom000_forlhpc',
+                    'NUCL_U_POLX_src5_snk18_mom000_forlhpc',
+                    'NUCL_U_POLX_src21_snk34_mom000_forlhpc']
+
+    >> NONE FOR meas8: source id corresponding to regular sequential 3pt measurement?
+
+[FLAVOUR D] [meas4, meas5, meas6, meas7, meas9]
+    t = 7 (meas4)
+        [UNPOLARISED]
+            HASH: 2b363f24eebd4631f3003bc1c1237deedd60d96c
+                <seqsrc_id>NUCL_D_UNPOL_src37_snk44_mom000_forlhpc</seqsrc_id>
+                <seqsrc_id>NUCL_D_UNPOL_src5_snk12_mom000_forlhpc</seqsrc_id>
+                <seqsrc_id>NUCL_D_UNPOL_src21_snk28_mom000_forlhpc</seqsrc_id>  
+
+        [POLARISED X]
+            HASH: e94be607b9b01158512575371b9a0e9ec5a65aad
+                'seq_srcs': ['NUCL_D_POLX_src37_snk44_mom000_forlhpc',
+                        'NUCL_D_POLX_src5_snk12_mom000_forlhpc',
+                        'NUCL_D_POLX_src21_snk28_mom000_forlhpc']
+
+    t = 9 (meas5)
+        [UNPOLARISED]
+            HASH: dd883b459af5fae1efdad855f82f3ef387dd9bd7
+                <seqsrc_id>NUCL_D_UNPOL_src37_snk46_mom000_forlhpc</seqsrc_id>
+                <seqsrc_id>NUCL_D_UNPOL_src5_snk14_mom000_forlhpc</seqsrc_id>
+                <seqsrc_id>NUCL_D_UNPOL_src21_snk30_mom000_forlhpc</seqsrc_id> 
+
+        [POLARISED X]
+            HASH: 56dd3dd568b8eb0a3f0ebe4483db77211d7c7f72
+                'seq_srcs': ['NUCL_D_POLX_src37_snk46_mom000_forlhpc',
+                        'NUCL_D_POLX_src5_snk14_mom000_forlhpc',
+                        'NUCL_D_POLX_src21_snk30_mom000_forlhpc']
+
+    t = 11 (meas6)
+        [UNPOLARISED]
+            HASH: 6090bb15950b324c734370f37badad5fd18eb0cd
+                <seqsrc_id>NUCL_D_UNPOL_src37_snk0_mom000_forlhpc</seqsrc_id>
+                <seqsrc_id>NUCL_D_UNPOL_src5_snk16_mom000_forlhpc</seqsrc_id>
+                <seqsrc_id>NUCL_D_UNPOL_src21_snk32_mom000_forlhpc</seqsrc_id>
+
+        [POLARISED X]
+            HASH: d8010be511eb9255c177e055971200a9fd97e89a 
+                'seq_srcs': ['NUCL_D_POLX_src37_snk0_mom000_forlhpc',
+                        'NUCL_D_POLX_src5_snk16_mom000_forlhpc',
+                        'NUCL_D_POLX_src21_snk32_mom000_forlhpc']
+
+    t = 13 (meas7)
+        [UNPOLARISED]
+            HASH: 0202c5573a4419e895fb9318e329dcd8f5f25752 
+                <seqsrc_id>NUCL_D_UNPOL_src37_snk2_mom000_forlhpc</seqsrc_id>
+                <seqsrc_id>NUCL_D_UNPOL_src5_snk18_mom000_forlhpc</seqsrc_id>
+                <seqsrc_id>NUCL_D_UNPOL_src21_snk34_mom000_forlhpc</seqsrc_id>
+
+        [POLARISED X]
+            HASH: 854e772e589e3bfe852712e56c3b597db6967d6c 
+                'seq_srcs': ['NUCL_D_POLX_src37_snk2_mom000_forlhpc',
+                        'NUCL_D_POLX_src5_snk18_mom000_forlhpc',
+                        'NUCL_D_POLX_src21_snk34_mom000_forlhpc']
+
+    >> NONE FOR meas9
+
+// C101r014
+// THREE-POINT
+only runs run13b_nog2 and run13c_nog2 contain sequential three-point functions
+run11: stochastic
+'C101': {
+        'sequential3pt': {
+            8: {
+                'source_set2': { 'src_id': [30], 'src_id is t_src': True },
+            },
+            10: {
+                'source_set2': { 'src_id': [30, 55], 'src_id is t_src': True },
+                'source_set3': { 'src_id': [0, 1], 'src_id is t_src': False },
+            },
+            12: {
+                'source_set2': { 'src_id': [30, 44, 53], 'src_id is t_src': True },
+                'source_set3': { 'src_id': [0, 1, 2, 3], 'src_id is t_src': False },
+            },
+            14: {
+                'source_set2': { 'src_id': [30, 36, 44, 51], 'src_id is t_src': True },
+                'source_set3': { 'src_id': [0, 1, 2, 3], 'src_id is t_src': False },
+                'source_set4': { 'src_id': [0, 1, 2, 3, 4, 5, 6, 7], 'src_id is t_src': False },
+            },
+
+        }
+    },
+
+// TWO-POINT
+'C101': {
+        'cls2pt': {
+            # 'source_set0': { 'src_id': [0, 1, 2, 3], 'src_id is t_src': False }, # run11
+            'source_set2': { 'src_id': [30, 36, 44, 51, 53, 55], 'src_id is t_src': True }, # run67
+            'source_set3': { 'src_id': [0, 1, 2, 3], 'src_id is t_src': False }, # run13b_nog2
+            'source_set4': { 'src_id': [0, 1, 2, 3, 4, 5, 6, 7], 'src_id is t_src': False }, # run13c_nog2
+            'source_set5': { 'src_id': [32, 34, 38, 40, 42, 46, 47, 48, 49, 57, 59, 61, 63, 65], 'src_id is t_src': True }, # run9+7
+
+        }
+    },
+Ncfg = 2000
+
+source_sets = ['source_set3', 'source_set4']
+source_set3: run13b_nog2 -> LHPC: source_ids3 = [0, 1, 2, 3]
+e.g.
+    cd /glurch/scratch/analysis/CLS/C101/C101r014/run13b_nog2/XMLINI
+    cat C101r014n100.ini.xml | grep NUCL_U_POLX | grep seqsource_id
+
+prints
+    <seqsource_id>NUCL_U_POLX_tsrc31_tsnk41_mom000_forlhpc</seqsource_id> (t = 10, s = 0)
+    <seqsource_id>NUCL_U_POLX_tsrc48_tsnk58_mom000_forlhpc</seqsource_id> (t = 10, s = 1)
+    <seqsource_id>NUCL_U_POLX_tsrc31_tsnk43_mom000_forlhpc</seqsource_id> (t = 12, s = 0)
+    <seqsource_id>NUCL_U_POLX_tsrc48_tsnk60_mom000_forlhpc</seqsource_id> (t = 12, s = 1)
+    <seqsource_id>NUCL_U_POLX_tsrc31_tsnk45_mom000_forlhpc</seqsource_id> (t = 14, s = 0)
+    <seqsource_id>NUCL_U_POLX_tsrc48_tsnk62_mom000_forlhpc</seqsource_id> (t = 14, s = 1)
+    <seqsource_id>NUCL_U_POLX_tsrc30_tsnk42_mom000_forlhpc</seqsource_id> (t = 12, s = 2)
+    <seqsource_id>NUCL_U_POLX_tsrc49_tsnk61_mom000_forlhpc</seqsource_id> (t = 12, s = 3)
+    <seqsource_id>NUCL_U_POLX_tsrc30_tsnk44_mom000_forlhpc</seqsource_id> (t = 14, s = 2)
+    <seqsource_id>NUCL_U_POLX_tsrc49_tsnk63_mom000_forlhpc</seqsource_id> (t = 14, s = 3)
+for all polarisations
+
+=> run13b_nog2 contains only lhpc measurements
+    
+source_set4: run13c_nog2 -> REG: source_ids4 = [0, 1, 2, 3]
+e.g.
+    cd /glurch/scratch/analysis/CLS/C101/C101r014/run13c_nog2/XMLINI
+    cat C101r014n100.ini.xml | grep NUCL_U_POLX | grep seqsource_id
+
+prints
+    <seqsource_id>NUCL_U_POLX_src31_snk45_mom000</seqsource_id> (t = 14, s = 0)
+    <seqsource_id>NUCL_U_POLX_src33_snk47_mom000</seqsource_id> (t = 14, s = 1)
+    <seqsource_id>NUCL_U_POLX_src37_snk51_mom000</seqsource_id> (t = 14, s = 2)
+    <seqsource_id>NUCL_U_POLX_src40_snk54_mom000</seqsource_id> (t = 14, s = 3)
+    <seqsource_id>NUCL_U_POLX_src43_snk57_mom000</seqsource_id> (t = 14, s = 4)
+    <seqsource_id>NUCL_U_POLX_src46_snk60_mom000</seqsource_id> (t = 14, s = 5)
+    <seqsource_id>NUCL_U_POLX_src48_snk62_mom000</seqsource_id> (t = 14, s = 6)
+    <seqsource_id>NUCL_U_POLX_src51_snk65_mom000</seqsource_id> (t = 14, s = 7)
+for all polarisations
+ 
+=> run13c_nog2 contains only regular measurements
+

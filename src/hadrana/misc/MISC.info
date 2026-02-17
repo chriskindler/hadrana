@@ -1,0 +1,12 @@
+# Miscellaneous scripts
+# Updated: 20/01/2026
+
+FILE
+lhpc_comparison.py
+
+TASK
+Compare sequential three-point function data generated using the LHPC trick with regular data 
+
+LITERATURE
+LHPC Collab., https://arxiv.org/pdf/1001.3620
+

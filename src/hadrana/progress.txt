@@ -1,0 +1,17 @@
+# formfactoranalysis
+# Updated: 19/01/2026
+# Scope: Analysis of axial and pseudoscalar form factors
+
+STATUS
+[ ] pending [+] complete [~] in-progress [!] problems
+
+PRIORITY
+P0 (must) P1 (should) P2 (later)
+
+TASKS
+T01 Data
+    T01-1 [P1] [~] Compare ratios with LHPC measurements vs. regular sequential measurements
+
+CHANGELOG
+    19/01/2026 Comparison LHPC vs. regular measurements on ensemble C101
+    20/01/2026 Implementation of O(a) improvement 

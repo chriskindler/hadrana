@@ -1,0 +1,196 @@
+# ENSEMBLES OVERVIEW LHP vs. REG SEQUENTIAL DATA
+# Updated: 11/02/2026
+
+<ensemble_id><replica_id> <source_set_id> <run_id>
+    LHP-SEQ
+        src_snk_sep: list(<source_id>)
+<ensemble_id><replica_id> <source_set_id> <run_id>
+    REG-SEQ
+        src_snk_sep: list(<source_id>)
+
+//
+// A-Ensembles
+//
+
+A650r000 0 run13_nog2
+A650r001 0 run13_nog2
+    LHP-SEQ
+        13: [0, 1, 2]
+    REG-SEQ
+        13: [3]
+    
+A653r000 2 run13
+    LHP-SEQ
+        13: [0, 1, 2]
+A653r000 2 run13
+    REG-SEQ
+        13: [3]
+
+A654r000 2 run13_nog2
+    LHP-SEQ
+        13: [0, 1, 2]
+    REG-SEQ
+        13: [3]
+
+//
+// B-Ensembles
+//
+
+B450r000 2 run13_nog2
+    LHP-SEQ
+        16: [0, 1, 2]
+    REG-SEQ
+        16: [3]
+
+B452r000 2 run13_nog2
+    LHP-SEQ
+        16: [0, 1, 2]
+    REG-SEQ
+        16: [3]
+
+//
+// C-Ensembles
+//
+
+C101r014 3 run13b_nog2
+    LHP-SEQ
+        14: [0, 1, 2, 3]
+C101r014 4 run13c_nog2
+    REG-SEQ
+        14: [0, 1, 2, 3]
+
+C102r003 3 run13b_nog2
+C102r004 3 run13b_nog2
+C102r005 3 run13b_nog2
+    LHP-SEQ
+        14: [0, 1, 2, 3]
+C102r003 4 run13c_nog2
+C102r004 4 run13c_nog2
+C102r005 4 run13c_nog2
+    REG-SEQ
+        14: [0, 1, 2, 3]
+
+//
+// D-Ensembles
+//
+
+Only REG-SEQ data for [D101, D150, D200, D201]
+Only LHP-SEQ data for [D250, D251, D450, D451, D452]
+
+//
+// E-Ensembles
+//
+
+Only LHP-SEQ data for [E250, E300]
+
+//
+// H-Ensembles
+//
+
+Only REG-SEQ data for [H101, H102, H105]
+
+H106r001 2 run13
+H106r002 2 run13
+H106r003 2 run13
+H106r004 2 run13
+    LHP-SEQ
+        10: [0, 1]
+        12: [0, 1]
+        14: [0, 1]
+H106r001 4 run13b_nog2
+H106r002 4 run13b_nog2
+H106r003 4 run13b_nog2
+H106r004 4 run13b_nog2
+    REG-SEQ
+        10: [0, 1]
+        12: [0, 1]
+        14: [0, 1]
+
+H107r000 2 run13
+H107r001 2 run13
+H107r002 2 run13
+H107r003 2 run13
+H107r004 2 run13
+H107r005 2 run13
+    LHP-SEQ
+        10: [0, 1]
+        12: [0, 1]
+        14: [0, 1]
+
+H107r000 4 run13
+H107r001 4 run13
+H107r002 4 run13
+H107r003 4 run13
+H107r004 4 run13
+H107r005 4 run13
+    REG-SEQ
+        10: [0, 1]
+        12: [0, 1]
+        14: [0, 1]
+
+//
+// J-Ensembles
+//
+
+J304r000 2 run13
+J304r001 2 run13
+    LHP-SEQ
+        24: [0, 1, 2]
+    REG-SEQ
+        24: [3]
+
+//
+// N-Ensembles
+//
+
+Only LHP-SEQ data for [N450, N451]
+Only REG-SEQ data for [N101, N200, N202, N203, N300, N302, N306, N401]
+
+N201r001 2 run13
+    LHP-SEQ
+        16: [0, 1]
+        19: [0, 1]
+    REG-SEQ
+        16: [2]
+        19: [2, 3]
+
+N204r000 2 run13_nog2
+    LHP-SEQ
+        16: [0, 1]
+        19: [0, 1]
+    REG-SEQ
+        16: [2]
+        19: [2, 3]
+
+N304r000 2 run13
+N304r001 2 run13
+    LHP-SEQ
+        21: [0, 1]
+        24: [0, 1]
+    REG-SEQ
+        21: [2]
+        24: [2, 3]
+
+//
+// S-Ensembles
+//
+
+Only REG-SEQ data for [S100, S201, S400]
+
+//
+// U-Ensembles
+//
+
+Only REG-SEQ data for [U102, U103]
+
+//
+// X-Ensembles
+//
+
+Only LHP-SEQ data for [X151, X250, X251, X252, X253, X450]
+
+//
+// rqcd-Ensembles
+//
+
+Only LHP-SEQ data for [rqcd021, rqcd030]
