@@ -16,7 +16,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["hadrana"]
+package-dir = {"" = "src"}
 
-[tool.setuptools.package-dir]
-hadrana = "src/hadrana"
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -185,7 +185,7 @@ def construct_isovector_bootstrap_ratios(ensemble: str, cur: str, pol: str, Nbst
         "(13, 3)": 3  SEQ
     }
     """
-    
+   
     # INIT RATIO NUMPY ARRAYS
     ratio_ax_bst = np.empty((Nbst, Nmsr, Nmom, Ntau))
     ratio_ps_bst = np.empty((Nbst, Nmsr, Nmom, Ntau))

@@ -1,16 +1,37 @@
-# LHPC DATA
-# Updated: 09/02/2026
+# LHPC INFO
+# Updated: 18/02/2026
 
 // This directory containts scripts and notebooks that compare axial and pseudoscalar three-point function measurement data generated using the regular sequential source method and the sequential source method employing the LHPC trick.
 
 // Literature
 
-1) Regular method
-Title: A lattice study of nucleon structure (1989)
-Authors: G. Martinelli, C.T. Sachrajda
-Link: https://www.sciencedirect.com/science/article/pii/0550321389900357?via%3Dihub
+Regular method
+    Title: A lattice study of nucleon structure (1989)
+    Authors: G. Martinelli, C.T. Sachrajda
+    Link: https://www.sciencedirect.com/science/article/pii/0550321389900357?via%3Dihub
 
-2) LHPC method
-Title: Nucleon structure from mixed action calculations using 2+1 flavors of asqtad sea and domain wall valence fermions (2010)
-Authors: LHPC Collaboration
-Link: https://arxiv.org/abs/1001.3620
+LHPC method
+    Title: Nucleon structure from mixed action calculations using 2+1 flavors of asqtad sea and domain wall valence fermions (2010)
+    Authors: LHPC Collaboration
+    Link: https://arxiv.org/abs/1001.3620
+
+// We compare the following data
+
+H106r001 2 run13 [HDF5]
+H106r002 2 run13 [HDF5]
+H106r003 2 run13 [HDF5]
+H106r004 2 run13 [HDF5]
+    LHP-SEQ
+        10: [0, 1]
+        12: [0, 1]
+        14: [0, 1]
+H106r001 4 run13b_nog2 [HDF5]
+H106r002 4 run13b_nog2 [HDF5]
+H106r003 4 run13b_nog2 [HDF5]
+H106r004 4 run13b_nog2 [HDF5]
+    REG-SEQ
+        10: [0, 1]
+        12: [0, 1]
+        14: [0, 1]
+
+
