@@ -1,0 +1,6 @@
+CHANGELOG
+    30/03/2026
+        [x] Derive ratio expressions and update notes
+        [~] Script to check for exceptionals of two-point function ratios C2(q)/C2(0)
+            Sync cora with hadrana wherever necessary
+
