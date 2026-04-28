@@ -8,8 +8,4 @@ Requires-Dist: numpy>=2.3.4
 Requires-Dist: h5py>=3.15.1
 Requires-Dist: iminuit>=2.32.0
 
-# TODO:
-- [ ] Implementation of new data pipeline for newly extracted ensembles
-- [ ] Implementation of Oa improvement for correlator data
-- [ ] Add all ensemble metadata and helper functions
-
+TBD
