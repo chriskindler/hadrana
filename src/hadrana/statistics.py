@@ -39,25 +39,26 @@ def bin_data(data: np.ndarray, rwfs: np.ndarray, bin_size: int):
 
 def generate_jackknife_resamples(input_data: np.ndarray, rwfs: np.ndarray, bin_size: int):
     """
-        Generate jackknife resampled ensembles from original correlator data (input_data) and corresponding reweighting factors (rwfs)
-        Note:
+    Generate jackknife resampled ensembles from original correlator data (input_data)
+    and corresponding reweighting factors (rwfs).
+
+    Note:
         Jackknife ensembles: n_jkn  = n_cfg
         Bootstrap ensembles: n_bst != n_cfg
     """
-    
     data, rwfs = bin_data(input_data, rwfs, bin_size)
-
-    # axis=0 of any input data is always the number of configurations
     n_cfg = data.shape[0]
-    n_rwf = rwfs.shape[0]
 
-    data_cen = np.mean(data, axis=0) # overline{wX}
-    rwfs_cen = np.mean(rwfs, axis=0) # overline{w}
+    data_cen = np.mean(data, axis=0)  # \overline{wX}
+    rwfs_cen = np.mean(rwfs, axis=0)  # \overline{w}
 
-    # jackknife resamples: (wO)^(J)_j and w^(J)_j
     data_jkn = (n_cfg * data_cen - data) / (n_cfg - 1)
     rwfs_jkn = (n_cfg * rwfs_cen - rwfs) / (n_cfg - 1)
-    return (data_jkn / rwfs_jkn[:, np.newaxis, np.newaxis, np.newaxis])
+
+    # Reshape rwfs_jkn to (n_cfg, 1, 1, ...) matching the rank of data.
+    rwfs_jkn = rwfs_jkn.reshape((n_cfg,) + (1,) * (data.ndim - 1))
+
+    return data_jkn / rwfs_jkn
 
 # TODO: Include option of binning for bootstrap construction
 def generate_bootstrap_ensemble(data: np.ndarray, rwfs: np.ndarray, n_bst: int, bst_sample_index: int):

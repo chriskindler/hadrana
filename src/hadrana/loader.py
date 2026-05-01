@@ -1,55 +1,81 @@
 import h5py
 import numpy as np
+from numpy import s_
+
+from pathlib import Path
 
 from hadrana.ensembles.helpers import EnsembleHelpers
-from hadrana.momenta import get_momentum_list
+from hadrana.momenta import get_momentum_shell
 
 def load_rwfs(ensemble: str) -> np.ndarray:
-    """Load reweighting factors (RWTM2_EO * RWRAT) concatenated across replicas."""
+    # if "rqcd" in ensemble:
+    #     return np.ones(len(settings.get_total_config_list(ensemble)))
     ens = EnsembleHelpers(ensemble)
-    base = f"/hdd/data/ensemble_data/{ensemble}/rwfs"
+    replica_slices: dict = ens.get_replica_slices()
 
-    rwfs_per_replica = []
-    for replica in ens.get_replicas():
-        path = f"{base}/{ensemble}{replica}.rwms.txt"
-        data = np.loadtxt(path)
-        rwfs_per_replica.append(data[:, 1] * data[:, 2])
+    n_cfg: int = ens.get_total_configuration_number()
+    rwfs: np.ndarray = np.zeros(n_cfg)
 
-    return np.concatenate(rwfs_per_replica)
+    basic_path = Path("/hdd/data/sign_rwt_cls")
+    for replica, slice_ in replica_slices.items():
+        if ensemble == "S201" and replica == "r002":
+            rwf_path = basic_path/f"rwt_ildg/cls_no_signs/{ensemble}{replica}.rwms.txt"
+        elif ensemble == "U102" and replica == "r002":
+            rwf_path = basic_path/f"rwt_ildg/cls_with_signs/{ensemble}{replica}.rwms.txt"
+        else:
+            # We prefer rwfs computed using deflation with signs
+            rwf_path = basic_path/f"rwt_ildg/dfl_with_signs/{ensemble}{replica}.rwms.txt"
 
-def load_c2pt(ensemble: str, source_set: str, temporal_direction: str) -> np.ndarray:
-    """
-    Load c2pt correlators with shape (n_cfg, n_src, n_mom, n_time).
-    we use 
-        temporal_direction = "fwd" for c3pt/c2pt ratios
-        average fwd/bwd for c2pt and c2pt_ratio analysis
-    """
+            # search in rwt_ildg.orig next
+            if not rwf_path.exists():
+                rwf_path = basic_path/f"rwt_ildg.orig/{ensemble}{replica}.rwms.txt"
 
-    ens = EnsembleHelpers(ensemble)
-    src_ids = ens.get_c2pt_measurement_ids(source_set)
+            # search in prod...
+            if not rwf_path.exists():
+                rwf_path = basic_path/f"rwt_ildg/dfl_no_prod_with_signs/{ensemble}{replica}.rwms.txt"
 
-    c2pt_shape = (
-        ens.get_total_configuration_number(),
-        len(src_ids),
-        len(get_momentum_list()),
-        ens.get_temporal_lattice_dimension(),
-    )
-    c2pt = np.zeros(c2pt_shape, dtype=float)
-    path = f"/hdd/data/ensemble_data/{ensemble}/c2pt/{ensemble}_c2pt.h5"
-    with h5py.File(path, "r") as f:
-        for s, src_id in enumerate(src_ids):
-            key = f"C2pt/polarisationNone/data/{source_set}/{src_id}/{temporal_direction}"
-            c2pt[:, s, :, :] = f[key][()]
+            # if it doesn't exist we check for stochastic with signs 
+            if not rwf_path.exists():
+                rwf_path = basic_path/f"rwt_ildg/cls_with_signs/{ensemble}{replica}.rwms.txt"
 
-    return c2pt
+            # if these do not exist we use dfl without signs
+            if not rwf_path.exists():
+                rwf_path = basic_path/f"rwt_ildg/dfl_no_signs/{ensemble}{replica}.rwms.txt"
 
-def load_c3pt(ensemble: str, source_set: str):
+            # search in prod...
+            if not rwf_path.exists():
+                rwf_path = basic_path/f"rwt_ildg/dfl_no_prod_no_signs/{ensemble}{replica}.rwms.txt"
+
+            # and lastly we attempt stochastic without signs
+            if not rwf_path.exists():
+                rwf_path = basic_path/f"rwt_ildg/cls_no_signs/{ensemble}{replica}.rwms.txt"
+
+        if not rwf_path.exists():
+            raise RuntimeError("RWF not found")
+      
+        with open(rwf_path, 'r') as f:
+            cfg_rwf_tmp = np.loadtxt(f)
+            _rwf = cfg_rwf_tmp[:,1] 
+            _rwf*= cfg_rwf_tmp[:,2] 
+
+        rwfs[slice_] = _rwf
+    
+    return rwfs
+
+def load_c2pt_jkn(ensemble): 
     pass
 
-if __name__ == "__main__":
-    ensemble = "D251"
 
-    source_set = "source_set1"
-    temporal_direction = "fwd"
+# def load_rwfs(ensemble: str) -> np.ndarray:
+#     """Load reweighting factors (RWTM2_EO * RWRAT) concatenated across replicas."""
+#     ens = EnsembleHelpers(ensemble)
+#     base = f"/hdd/data/ensemble_data/{ensemble}/rwfs"
+#
+#     rwfs_per_replica = []
+#     for replica in ens.get_replicas():
+#         path = f"{base}/{ensemble}{replica}.rwms.txt"
+#         data = np.loadtxt(path)
+#         rwfs_per_replica.append(data[:, 1] * data[:, 2])
+#
+#     return np.concatenate(rwfs_per_replica)
 
-    c2pt_data = load_c2pt(ensemble)

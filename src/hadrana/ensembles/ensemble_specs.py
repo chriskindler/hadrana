@@ -1,4 +1,5 @@
 from .ensemble_configuration_numbers import _CONFIGURATION_NUMBERS as CONFIGURATION_NUMBERS
+from .ensemble_exceptionals import _EXCEPTIONAL_CONFIGURATION_NUMBERS as EXCEPTIONAL_CONFIGURATION_NUMBERS
 from .ensemble_lattice_dimensions import _LATTICE_DIMENSIONS as LATTICE_DIMENSIONS
 from .ensemble_replica_order import _REPLICA_ORDER as REPLICA_ORDER
 from .ensemble_list import (
@@ -11,6 +12,7 @@ from .ensemble_measurements_c3pt import _MEASUREMENTS_C3PT as MEASUREMENTS_C3PT
 
 __all__ = [
     "CONFIGURATION_NUMBERS",
+    "EXCEPTIONAL_CONFIGURATION_NUMBERS",
     "LATTICE_DIMENSIONS",
     "REPLICA_ORDER",
     "ENSEMBLES_SYM",

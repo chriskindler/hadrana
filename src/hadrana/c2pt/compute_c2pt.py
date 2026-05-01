@@ -1,73 +1,100 @@
 import numpy as np 
 
+from hadrana.c2pt.c2pt_io import load_c2pt_raw
 from hadrana.ensembles.helpers import EnsembleHelpers
-from hadrana.loader import load_rwfs, load_c2pt
-from hadrana.momenta import get_momentum_shell
+from hadrana.loader import load_rwfs
 from hadrana.statistics import generate_jackknife_resamples
 
+"""
+D251_c2pt_jkn.h5/
+    c2pt/
+        nsquare_0/
+            /fwd
+            /fwd_bwd_avg
+        nsquare_1/
+            /fwd
+            /fwd_bwd_avg
+        nsquare_2/
+            /fwd
+            /fwd_bwd_avg
+        nsquare_3/
+            /fwd
+            /fwd_bwd_avg
+        nsquare_4/
+            /fwd
+            /fwd_bwd_avg
+        nsquare_5/
+            /fwd
+            /fwd_bwd_avg
+        nsquare_6/
+            /fwd
+            /fwd_bwd_avg
+        nsquare_8/
+            /fwd
+            /fwd_bwd_avg
 
-def compute_c2pt_jkn_fwd(ensemble: str, source_set: str, nsquare: int) -> np.ndarray:
-    # compute averaged c2pt over measurements per nsquare value 
+    c2pt_ratio/
+        nsquare_1/
+        nsquare_2/
+        nsquare_3/
+        nsquare_4/
+        nsquare_5/
+        nsquare_6/
+        nsquare_8/
+"""
 
-    c2pt_fwd: np.ndarray = load_c2pt(ensemble, source_set, "fwd")
-    rwfs: np.ndarray     = load_rwfs(ensemble) 
-    mom_shell_list, mom_shell_indices = get_momentum_shell(nsquare)
+def compute_c2pt_jkn_fwd(ensemble: str, nsquare: int) -> np.ndarray:
+    h = EnsembleHelpers(ensemble)
+    exceptionals = h.get_exceptionals()
 
-    print(mom_shell_list)
-    print(mom_shell_indices)
-    print(len(mom_shell_list))
+    rwfs: np.ndarray = load_rwfs(ensemble) 
+    rwfs = np.delete(rwfs, exceptionals, axis=0)
 
-    print()
-    c2pt_shape = c2pt_fwd.shape
-    c2pt_jkn_fwd = np.zeros(c2pt_shape, dtype=float)
-    c2pt_jkn_fwd = generate_jackknife_resamples(c2pt_fwd[:, :, mom_shell_indices, :], rwfs, bin_size=1)
+    c2pt_fwd: np.ndarray = load_c2pt_raw(ensemble, nsquare, "fwd")
+    c2pt_fwd = np.delete(c2pt_fwd, exceptionals, axis=0)
 
-    print("SIZE BEFORE AVERAGING")
-    print(f"{c2pt_jkn_fwd.nbytes / 1024 ** 2:.2f} MB")
+    c2pt_jkn_fwd = generate_jackknife_resamples(c2pt_fwd, rwfs, bin_size=1)
 
     # average over source ids and equivalent momenta
     c2pt_jkn_fwd_avg = np.mean(c2pt_jkn_fwd, axis=(1,2))
-
-    print("SIZE AFTER AVERAGING")
-    print(f"{c2pt_jkn_fwd_avg.nbytes / 1024 ** 2:.2f} MB")
-
     return c2pt_jkn_fwd_avg
 
 def compute_c2pt_jkn_fwd_bwd_avg(ensemble: str, nsquare: int) -> np.ndarray:
-    ens = EnsembleHelpers(ensemble)
+    h = EnsembleHelpers(ensemble)
+    exceptionals: np.ndarray = h.get_exceptionals()
 
-    source_sets: list[str] = ens.get_c2pt_source_sets()
-
-    # load reweighting factors
     rwfs: np.ndarray = load_rwfs(ensemble) 
+    rwfs = np.delete(rwfs, exceptionals, axis=0)
 
-    # construct list of momentum configurations corresponding to nsquare
-    mom_shell_list, mom_shell_indices = get_momentum_shell(nsquare)
+    c2pt_fwd: np.ndarray = load_c2pt_raw(ensemble, nsquare, "fwd")
+    c2pt_bwd: np.ndarray = load_c2pt_raw(ensemble, nsquare, "bwd")
 
-    for source_set in source_sets:
-        c2pt_fwd: np.ndarray = load_c2pt(ensemble, source_set, "fwd")
-        c2pt_bwd: np.ndarray = load_c2pt(ensemble, source_set, "bwd")
+    c2pt_fwd = np.delete(c2pt_fwd, exceptionals, axis=0)
+    c2pt_bwd = np.delete(c2pt_bwd, exceptionals, axis=0)
 
-        print(c2pt_fwd.shape)
+    # compute forward-backward average
+    c2pt_fwd_bwd_avg = 0.5 * (c2pt_fwd + c2pt_bwd)  # (n_cfg, n_src, n_mom, n_time)
 
-    print(source_sets)
-
-
-    pass
+    # average over source ids and momenta
+    c2pt = np.mean(c2pt_fwd_bwd_avg, axis=(1,2)) # (n_cfg, n_time)
+    c2pt_jkn_fwd_bwd_avg = generate_jackknife_resamples(c2pt, rwfs, bin_size=1)
+    return c2pt_jkn_fwd_bwd_avg
 
 def compute_c2pt_ratio_jkn(ensemble: str, nsquare: int):
-    pass
+    c2pt_jkn_q = compute_c2pt_jkn_fwd_bwd_avg(ensemble, nsquare)
+    c2pt_jkn_0 = compute_c2pt_jkn_fwd_bwd_avg(ensemble, 0)
+    return c2pt_jkn_q / c2pt_jkn_0
 
 if __name__ == "__main__":
     ensemble = "D251"
-    source_set = "source_set1"
-
     nsquare = 1
 
+    c2pt_jkn_fwd = compute_c2pt_jkn_fwd(ensemble, nsquare)
+    print(c2pt_jkn_fwd.shape)
     c2pt_jkn_fwd_bwd_avg = compute_c2pt_jkn_fwd_bwd_avg(ensemble, nsquare)
-
-
-
+    print(c2pt_jkn_fwd_bwd_avg.shape)
+    c2pt_ratio_jkn = compute_c2pt_ratio_jkn(ensemble, nsquare)
+    print(c2pt_ratio_jkn.shape)
 
 
 
