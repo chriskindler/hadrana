@@ -1,0 +1,60 @@
+{
+    "_schema_version": "1.0",
+
+    "ensemble": {
+        "id": "D251",
+        "nt": 128,
+        "ns": 64,
+        "beta": 3.55,
+        "lattice_spacing_fm": 0.064,
+        "n_cfg": 2013,
+        "bin_size": 1,
+        "source_set_numbers": [0, 1],
+        "exceptionals": [482]
+    },
+
+    "methodology": {
+        "resample_type": "jackknife",
+        "correlated": true,
+        "central_value_fit": true,
+        "resample_fit": true
+    },
+
+    "c2pt": {
+        "models":                        ["one-state-exp", "two-state-exp"],
+        "nmax_values":                   [0, 1, 2, 3, 4, 5, 6, 8],
+        "signal_to_noise_threshold":     5,
+        "sink_distance":                 50,
+        "initial_timeslices":            [3, 4, 5, 6, 7, 8, 9, 10],
+        "starting_value_strategy":       "data_driven",
+        "starting_value_overrides":      {}
+    },
+
+    "c2pt_ratio": {
+        "models":                        ["constant", "two-state-exp-include-Z10", "two-state-exp-exclude-Z10"],
+        "nmax_values":                   [1, 2, 3, 4, 5, 6, 8],
+        "signal_to_noise_threshold":     5,
+        "sink_distance":                 50,
+        "initial_timeslices":            [1, 2, 3, 4, 5, 6],
+        "starting_value_strategy":       "data_driven",
+        "starting_value_overrides":      {}
+    },
+
+    "ratio": {
+        "models":                        ["A1", "B3", "C3", "D5", "E7", "F7", "G9"],
+        "nmax_values":                   [0, 1, 2, 3, 4, 5, 6, 8],
+        "tsep_values":                   [12, 14, 16, 18, 20],
+        "tau_cut":                       2,
+        "channels":                      ["axial", "pseudoscalar"],
+        "polarisations":                 ["x", "y", "z"],
+        "starting_value_strategy":       "data_driven_with_c2pt_gaps",
+        "starting_value_overrides":      {}
+    },
+
+    "formfactor": {
+        "models":                        ["GA", "GP", "GtildeP"],
+        "nmax_values":                   [1, 2, 3, 4, 5, 6, 8],
+        "extraction":                    "linear_2x2_solve",
+        "z_expansion_kmax":              4
+    }
+}
