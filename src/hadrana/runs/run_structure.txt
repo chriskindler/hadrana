@@ -1,0 +1,35 @@
+Filename of HDF5 file per fit comprised of
+
+<ensmemble_id>
+<observable>
+<nsquare0X>
+<fit_range_min>
+<fit_range_max>
+<model_id>
+<correlation_type>
+
+
+run directory is specified by the run id
+RUN_ROOT = Path("/home/ck/phd/results/c2pt/D251")
+RUN_ID = "run01"
+
+RUN_PATH = RUN_ROOT / RUN_ID
+
+there is a run overview file specifying the purpose of each fit run
+D251_c2pt_run_overview.txt
+
+example:
+
+/home/ck/phd/results/c2pt/D251/c2pt_run01
+    D251_c2pt_run01.log
+    D251-c2pt-nsquare00-tmin13-tmax44-one-state-exp-uncorrelated-a3f2b1.h5
+    D251-c2pt-nsquare00-tmin14-tmax44-one-state-exp-uncorrelated-a3f2b1.h5
+    D251-c2pt-nsquare00-tmin15-tmax44-one-state-exp-uncorrelated-a3f2b1.h5
+    D251-c2pt-nsquare00-tmin18-tmax44-one-state-exp-uncorrelated-a3f2b1.h5
+    D251-c2pt-nsquare00-tmin12-tmax44-one-state-exp-uncorrelated-a3f2b1.h5
+    D251-c2pt-nsquare00-tmin12-tmax44-one-state-exp-uncorrelated-a3f2b1.h5
+
+
+
+
+

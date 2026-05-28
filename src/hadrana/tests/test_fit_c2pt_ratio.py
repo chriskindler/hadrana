@@ -5,7 +5,7 @@ import numpy as np
 
 from typing import Literal, Optional
 
-from cora.fit import (
+from chigrad.fit import (
     fit, FitResult,
     fit_constant_correlated, ConstantFitResult,
     compute_cov, compute_cov_inv,
@@ -90,6 +90,23 @@ def compute_model_average(
 
     return mean, error, p
 
+model_averages = []
+
+def compute_exp_dEt_jkn(
+    M_fit_jkn:  np.ndarray,
+    nmax:    int,
+    ns:     int,
+    timeslices: np.ndarray
+) -> np.ndarray:
+    """
+    E(p) = sqrt(p^2 + M^2)
+    where p^2 = (2*pi/Ns)^2 * n^2
+    dE(p) = sqrt(p^2 + M^2)
+    """
+    p_squared = (2.0 * np.pi / ns) ** 2 * nmax
+    dE_jkn = np.sqrt(p_squared + M_fit_jkn ** 2) - M_fit_jkn
+    return np.exp(dE_jkn[:, None] * timeslices[None, :])
+
 # --------------------------------------------------------------------------------
 # DRIVER
 # --------------------------------------------------------------------------------
@@ -97,8 +114,10 @@ def compute_model_average(
 if __name__ == "__main__":
     ensemble           = "D251"
     nmax_values        = [1, 2, 3, 4, 5, 6, 8]
-    initial_timeslices = [3, 4, 5, 6]
+    initial_timeslices = [2, 3, 4, 5, 6, 7, 8, 9]
     snr_threshold      = 5
+
+    ns = 64
 
     # ---- load data ----
     R_jkn_per_mom = {}
@@ -107,106 +126,107 @@ if __name__ == "__main__":
         for nmax in nmax_values:
             R_jkn_per_mom[nmax] = file[f"/c2pt_ratio/nsquare_{nmax}"][()]
 
-    E0_jkn_per_mom = {}
-    for nmax in [0] + nmax_values:
-        with open(
-            f"/hdd/data/fit_results/{ensemble}/nucleon_energies/"
-            f"{ensemble}_E0_jkn_mom0{nmax}_tzero03.pkl", "rb"
-        ) as f:
-            E0_jkn_per_mom[nmax] = pickle.load(f)
-
-    def compute_exp_dE_jkn(E0_jkn_per_mom, nmax, t):
-        dE_jkn = E0_jkn_per_mom[nmax] - E0_jkn_per_mom[0]
-        return np.exp(dE_jkn[:, None] * t[None, :])
+    with open(
+        f"/hdd/data/fit_results/{ensemble}/nucleon_energies/"
+        f"{ensemble}_E0_jkn_mom00_tzero03.pkl", "rb"
+    ) as f:
+        M_fit_jkn = pickle.load(f)
 
     # ---- analyze one momentum ----
-    nmax = 1
-    R_jkn       = R_jkn_per_mom[nmax]
-    n_res, n_t  = R_jkn.shape
-    timeslices  = np.arange(n_t)
+    for nmax in nmax_values:
+        print(f"+++++++++++++++++++++ nmax = {nmax} ++++++++++++++++++++++++++")
+        R_jkn       = R_jkn_per_mom[nmax]
+        n_res, n_t  = R_jkn.shape
+        timeslices  = np.arange(n_t)
 
-    R_jkn       = R_jkn * compute_exp_dE_jkn(E0_jkn_per_mom, nmax, timeslices)
-    R_jkn_avg   = np.mean(R_jkn, axis=0)
-    R_jkn_err   = np.std(R_jkn, axis=0, ddof=0) * np.sqrt(n_res - 1)
+        R_jkn       = R_jkn * compute_exp_dEt_jkn(M_fit_jkn, nmax, ns, timeslices)
+        R_jkn_avg   = np.mean(R_jkn, axis=0)
+        R_jkn_err   = np.std(R_jkn, axis=0, ddof=0) * np.sqrt(n_res - 1)
 
-    t_max = estimate_maximum_timeslice(
-        c2pt_jkn_avg              = R_jkn_avg,
-        c2pt_jkn_err              = R_jkn_err,
-        signal_to_noise_threshold = snr_threshold,
-    )
-    print(f"t_max = {t_max}")
-
-    cov_full     = compute_cov(R_jkn, resample_method="jackknife")
-    cov_inv_full = compute_cov_inv(cov_full)
-    print(f"covariance shape: {cov_full.shape}")
-
-    t0_list, tmin_list       = [], []
-    B0_cen_list, B0_err_list = [], []
-    chi2_list, ndof_list     = [], []
-
-    for t0 in initial_timeslices:
-        # two-state diagnostic fit
-        start_params = estimate_c2pt_ratio_starting_values(
-            c2pt_ratio_exp_jkn = R_jkn,
-            initial_timeslice  = t0,
-            maximum_timeslice  = t_max,
+        t_max = estimate_maximum_timeslice(
+            c2pt_jkn_avg              = R_jkn_avg,
+            c2pt_jkn_err              = R_jkn_err,
+            signal_to_noise_threshold = snr_threshold,
         )
-        central_two_state, _ = perform_two_state_fit(
-            t_min=t0, t_max=t_max, y_res=R_jkn,
-            cov_inv_full=cov_inv_full,
-            start_params=start_params,
+        print(f"t_max = {t_max}")
+
+        cov_full     = compute_cov(R_jkn, resample_method="jackknife")
+        cov_inv_full = compute_cov_inv(cov_full)
+        print(f"covariance shape: {cov_full.shape}")
+
+        t0_list, tmin_list       = [], []
+        B0_cen_list, B0_err_list = [], []
+        chi2_list, ndof_list     = [], []
+
+        for t0 in initial_timeslices:
+            # two-state diagnostic fit
+            start_params = estimate_c2pt_ratio_starting_values(
+                c2pt_ratio_exp_jkn = R_jkn,
+                initial_timeslice  = t0,
+                maximum_timeslice  = t_max,
+            )
+            central_two_state, _ = perform_two_state_fit(
+                t_min=t0, t_max=t_max, y_res=R_jkn,
+                cov_inv_full=cov_inv_full,
+                start_params=start_params,
+            )
+            v   = central_two_state.values
+            B0_ts, B1_ts, dE1_ts = v["B0"], v["B1"], v["dE1"]
+
+            # t_min from excited-state cutoff
+            t_min = estimate_c2pt_ratio_minimum_timeslice(
+                c2pt_ratio_jkn_err = R_jkn_err,
+                initial_timeslice  = t0,
+                maximum_timeslice  = t_max,
+                B0_est             = B0_ts,
+                B1_est             = B1_ts,
+                dE1_est            = dE1_ts,
+            )
+
+            # reject degenerate two-state fits
+            if t_min is None or dE1_ts > 1.0 or central_two_state.chi2_red > 2.5:
+                print(f"  REJECTED t0={t0}: dE1={dE1_ts:.3f}, chi2/ndof={central_two_state.chi2_red:.2f}")
+                continue
+
+            # Production fit: closed-form weighted mean for B_0
+            central_const, resample_const = perform_constant_fit(
+                t_min=t_min, t_max=t_max, y_res=R_jkn,
+                cov_inv_full=cov_inv_full,
+                resample_fit=True,
+            )
+
+            B0_jkn  = np.array([r.values["B0"] for r in resample_const])
+            B0_cen  = central_const.values["B0"]
+            B0_err  = float(np.sqrt(n_res - 1) * np.std(B0_jkn, ddof=0))
+
+            print(f"t0={t0:>2} tmin={t_min:>2}  "
+                f"B0={gv.gvar(B0_cen, B0_err)}  "
+                f"chi2/ndof={central_const.chi2_red:.2f}  ndof={central_const.ndof}")
+
+            t0_list.append(t0)
+            tmin_list.append(t_min)
+            B0_cen_list.append(B0_cen)
+            B0_err_list.append(B0_err)
+            chi2_list.append(central_const.chi2)
+            ndof_list.append(central_const.ndof)
+
+        # ---- model average over t0 ----
+        B0_avg, B0_avg_err, p = compute_model_average(
+            np.asarray(chi2_list), np.asarray(ndof_list),
+            np.asarray(B0_cen_list), np.asarray(B0_err_list),
         )
-        v   = central_two_state.values
-        B0_ts, B1_ts, dE1_ts = v["B0"], v["B1"], v["dE1"]
 
-        # t_min from excited-state cutoff
-        t_min = estimate_c2pt_ratio_minimum_timeslice(
-            c2pt_ratio_jkn_err = R_jkn_err,
-            initial_timeslice  = t0,
-            maximum_timeslice  = t_max,
-            B0_est             = B0_ts,
-            B1_est             = B1_ts,
-            dE1_est            = dE1_ts,
-        )
+        model_averages.append(gv.gvar(B0_avg, B0_avg_err))
 
-        # reject degenerate two-state fits
-        if t_min is None or dE1_ts > 1.5 or central_two_state.chi2_red > 2.0:
-            print(f"  REJECTED t0={t0}: dE1={dE1_ts:.3f}, chi2/ndof={central_two_state.chi2_red:.2f}")
-            continue
+        print(f"\nMODEL AVERAGE for n^2 = {nmax}")
+        print(f"{'t0':>3} {'tmin':>4} {'p_i':>8}   {'B0':>20}   {'chi2/ndof':>10}")
+        for i, t0 in enumerate(t0_list):
+            chi2_red = chi2_list[i] / ndof_list[i]
+            print(f"{t0:>3d} {tmin_list[i]:>4d} {p[i]:>8.4f}   "
+                f"{str(gv.gvar(B0_cen_list[i], B0_err_list[i])):>20}   "
+                f"{chi2_red:>10.2f}")
+        #print(f"\nB_0(n^2={nmax}) = {gv.gvar(B0_avg, B0_avg_err)}")
 
-        # Production fit: closed-form weighted mean for B_0
-        central_const, resample_const = perform_constant_fit(
-            t_min=t_min, t_max=t_max, y_res=R_jkn,
-            cov_inv_full=cov_inv_full,
-            resample_fit=True,
-        )
+        for nmax, mavg in zip(nmax_values, model_averages):
+            print(f"{nmax} & {mavg}")
 
-        B0_jkn  = np.array([r.values["B0"] for r in resample_const])
-        B0_cen  = central_const.values["B0"]
-        B0_err  = float(np.sqrt(n_res - 1) * np.std(B0_jkn, ddof=0))
-
-        print(f"t0={t0:>2}  tmin={t_min:>2}  "
-              f"B0={gv.gvar(B0_cen, B0_err)}  "
-              f"chi2/ndof={central_const.chi2_red:.2f}  ndof={central_const.ndof}")
-
-        t0_list.append(t0)
-        tmin_list.append(t_min)
-        B0_cen_list.append(B0_cen)
-        B0_err_list.append(B0_err)
-        chi2_list.append(central_const.chi2)
-        ndof_list.append(central_const.ndof)
-
-    # ---- model average over t0 ----
-    B0_avg, B0_avg_err, p = compute_model_average(
-        np.asarray(chi2_list), np.asarray(ndof_list),
-        np.asarray(B0_cen_list), np.asarray(B0_err_list),
-    )
-
-    print(f"\nMODEL AVERAGE for n^2 = {nmax}")
-    print(f"{'t0':>3} {'tmin':>4} {'p_i':>8}   {'B0':>20}   {'chi2/ndof':>10}")
-    for i, t0 in enumerate(t0_list):
-        chi2_red = chi2_list[i] / ndof_list[i]
-        print(f"{t0:>3d} {tmin_list[i]:>4d} {p[i]:>8.4f}   "
-              f"{str(gv.gvar(B0_cen_list[i], B0_err_list[i])):>20}   "
-              f"{chi2_red:>10.3f}")
-    print(f"\nB_0(n^2={nmax}) = {gv.gvar(B0_avg, B0_avg_err)}")

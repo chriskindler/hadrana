@@ -1,0 +1,188 @@
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: ============================================================
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: RUN START
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: ============================================================
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: run_id     = 20260504T1420Z_D251_c2pt_one-state_tmin-scan
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: host       = office.physik.uni-regensburg.de
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: user       = ck
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: python     = 3.13.1
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: numpy      = 2.1.3
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: iminuit    = 2.30.1
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: scipy      = 1.14.1
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: h5py       = 3.12.1
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: gvar       = 13.1.2
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: 
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: chigrad    = a3f2b1c (commited)
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: hadrana    = d7e8f29 (commit pending: 2 modified files)
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: 
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: config     = /home/ck/phd/code/hadrana/src/hadrana/fits/fit_configs/D251_fit_config.json
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: output     = /home/ck/phd/code/nucleon_analysis/results/c2pt_fits/nmax01/runs/20260504T1420Z_D251_c2pt_one-state_tmin-scan
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: 
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: CONFIG:
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   ensemble.id                       = D251
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   ensemble.nt                       = 128
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   ensemble.exceptionals             = [482]
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   ensemble.bin_size                 = 1
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   methodology.resample_type         = jackknife
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   methodology.correlated            = True
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   c2pt.signal_to_noise_threshold    = 50
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   c2pt.initial_timeslices           = [3, 4, 5, 6, 7, 8, 9, 10]
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   c2pt.nmax_values                  = [1]
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   c2pt.starting_value_strategy      = data_driven
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: 
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: ------------------------------------------------------------
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: DATA LOADING
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: ------------------------------------------------------------
+2026-05-04T14:20:03Z [INFO] hadrana.c2pt.c2pt_io: loading /hdd/data/ensemble_data/D251/c2pt/D251_c2pt_jkn.h5
+2026-05-04T14:20:03Z [INFO] hadrana.c2pt.c2pt_io: file mtime = 2026-05-02T11:43:17Z
+2026-05-04T14:20:04Z [INFO] hadrana.c2pt.c2pt_io: nmax=1: shape=(2012, 128), bytes=2.06 MB
+2026-05-04T14:20:04Z [INFO] hadrana.c2pt.c2pt_io: data attrs: ensemble=D251 resampling=jackknife bin_size=1 reweighted=True exceptionals_excluded=True
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log: 
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log: ------------------------------------------------------------
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log: FIT CAMPAIGN: nmax=1
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log: ------------------------------------------------------------
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log: c2pt summary (nmax=1):
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log:   t= 4: E_eff= 0.4012  SN= 465.2
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log:   t= 8: E_eff= 0.3576  SN= 432.7
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log:   t=12: E_eff= 0.3502  SN= 380.1
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log:   t=16: E_eff= 0.3517  SN= 314.5
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log:   t=20: E_eff= 0.3520  SN= 218.9
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log:   t=25: E_eff= 0.3511  SN= 120.3
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log:   t=30: E_eff= 0.3510  SN=  54.1
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log: 
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log: t_max = 31 (SN > 50, forward half)
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log: 
+2026-05-04T14:20:04Z [INFO] hadrana.fits.fit_c2pt: FIT START | D251_n01_tzero04_tmin16_tmax31_1state_corr_a3f2b1 | nmax=1, t_0=4
+2026-05-04T14:20:04Z [INFO] hadrana.fits.fit_c2pt:   two-state on [4, 31]: A0=1.05e-13 A1=4.2e-15 E0=0.3522 dE1=0.532 E1=0.884
+2026-05-04T14:20:04Z [INFO] hadrana.fits.fit_c2pt:   two-state valid=True converged=True chi2/dof=1.34 (p=0.124)
+2026-05-04T14:20:04Z [INFO] hadrana.fits.fit_c2pt:   t_min from criterion: 16 (Â_1 exp(-Ê_1 t) < err/4 first at t=16)
+2026-05-04T14:20:05Z [INFO] hadrana.fits.fit_c2pt:   one-state on [16, 31]: 2012 jackknife resamples
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt:   one-state: E_0 = 0.35171(66), A_0 = 9.36(12)e-14
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt:   chi2 = 17.84, ndof = 14, chi2/dof = 1.27, p = 0.215
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt:   cov_cond = 2.3e6, max |pull| = 1.94 at t=28
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt:   valid=True converged=True accurate_cov=True n_valid_jkn=2012/2012
+2026-05-04T14:20:09Z [INFO] hadrana.runs.serialise: saved /home/ck/phd/code/nucleon_analysis/results/c2pt_fits/nmax01/runs/20260504T1420Z_.../fits/D251_n01_tzero04_tmin16_tmax31_1state_corr_a3f2b1.h5
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt: FIT END | D251_n01_tzero04_tmin16_tmax31_1state_corr_a3f2b1
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt: 
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt: FIT START | D251_n01_tzero05_tmin16_tmax31_1state_corr_b5c9d3 | nmax=1, t_0=5
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt:   two-state on [5, 31]: A0=1.04e-13 A1=4.8e-15 E0=0.3520 dE1=0.518 E1=0.870
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt:   two-state valid=True converged=True chi2/dof=1.18 (p=0.244)
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt:   t_min from criterion: 16
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt:   one-state: E_0 = 0.35169(67), A_0 = 9.35(13)e-14, chi2/dof = 1.23 (p = 0.235)
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt:   cov_cond = 2.4e6, max |pull| = 1.88 at t=28
+2026-05-04T14:20:13Z [INFO] hadrana.runs.serialise: saved .../fits/D251_n01_tzero05_tmin16_tmax31_1state_corr_b5c9d3.h5
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt: FIT END | D251_n01_tzero05_tmin16_tmax31_1state_corr_b5c9d3
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt: 
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt: FIT START | D251_n01_tzero08_..._e1d4a8 | nmax=1, t_0=8
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt:   two-state on [8, 31]: A0=1.02e-13 A1=2.1e-15 E0=0.3519 dE1=0.412 E1=0.764
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt:   two-state valid=True converged=True chi2/dof=0.91 (p=0.561)
+2026-05-04T14:20:13Z [WARNING] hadrana.fits.fit_c2pt: t_min criterion not satisfied in [8, 31] — SKIPPING fit
+2026-05-04T14:20:13Z [WARNING] hadrana.fits.fit_c2pt:   debug: at t=31 excited = 1.4e-19, threshold = 8.3e-19; criterion needs later t
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt: FIT SKIP | D251_n01_tzero08
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt: 
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: ------------------------------------------------------------
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: RUN SUMMARY
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: ------------------------------------------------------------
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: fits attempted: 8
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: fits succeeded: 6
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: fits skipped:   2 (criterion not satisfied)
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: fits failed:    0
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: 
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: wall time: 10.2s
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: manifest:  /home/ck/phd/code/nucleon_analysis/results/c2pt_fits/nmax01/runs/20260504T1420Z_.../fits.parquet
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: ============================================================
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: RUN END
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: ============================================================
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: ============================================================
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: RUN START
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: ============================================================
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: run_id     = 20260504T1420Z_D251_c2pt_one-state_tmin-scan
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: host       = office.physik.uni-regensburg.de
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: user       = ck
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: python     = 3.13.1
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: numpy      = 2.1.3
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: iminuit    = 2.30.1
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: scipy      = 1.14.1
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: h5py       = 3.12.1
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: gvar       = 13.1.2
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: 
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: cora       = a3f2b1c (clean)
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: hadrana    = d7e8f29 (dirty: 2 modified files)
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: 
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: config     = /home/ck/phd/code/hadrana/src/hadrana/fits/fit_configs/D251_fit_config.json
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: output     = /home/ck/phd/code/nucleon_analysis/results/c2pt_fits/nmax01/runs/20260504T1420Z_D251_c2pt_one-state_tmin-scan
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: 
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: CONFIG:
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   ensemble.id                       = D251
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   ensemble.nt                       = 128
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   ensemble.exceptionals             = [482]
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   ensemble.bin_size                 = 1
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   methodology.resample_type         = jackknife
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   methodology.correlated            = True
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   c2pt.signal_to_noise_threshold    = 50
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   c2pt.initial_timeslices           = [3, 4, 5, 6, 7, 8, 9, 10]
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   c2pt.nmax_values                  = [1]
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log:   c2pt.starting_value_strategy      = data_driven
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: 
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: ------------------------------------------------------------
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: DATA LOADING
+2026-05-04T14:20:03Z [INFO] hadrana.runs.log: ------------------------------------------------------------
+2026-05-04T14:20:03Z [INFO] hadrana.c2pt.c2pt_io: loading /hdd/data/ensemble_data/D251/c2pt/D251_c2pt_jkn.h5
+2026-05-04T14:20:03Z [INFO] hadrana.c2pt.c2pt_io: file mtime = 2026-05-02T11:43:17Z
+2026-05-04T14:20:04Z [INFO] hadrana.c2pt.c2pt_io: nmax=1: shape=(2012, 128), bytes=2.06 MB
+2026-05-04T14:20:04Z [INFO] hadrana.c2pt.c2pt_io: data attrs: ensemble=D251 resampling=jackknife bin_size=1 reweighted=True exceptionals_excluded=True
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log: 
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log: ------------------------------------------------------------
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log: FIT CAMPAIGN: nmax=1
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log: ------------------------------------------------------------
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log: c2pt summary (nmax=1):
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log:   t= 4: E_eff= 0.4012  SN= 465.2
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log:   t= 8: E_eff= 0.3576  SN= 432.7
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log:   t=12: E_eff= 0.3502  SN= 380.1
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log:   t=16: E_eff= 0.3517  SN= 314.5
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log:   t=20: E_eff= 0.3520  SN= 218.9
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log:   t=25: E_eff= 0.3511  SN= 120.3
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log:   t=30: E_eff= 0.3510  SN=  54.1
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log: 
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log: t_max = 31 (SN > 50, forward half)
+2026-05-04T14:20:04Z [INFO] hadrana.runs.log: 
+2026-05-04T14:20:04Z [INFO] hadrana.fits.fit_c2pt: FIT START | D251_n01_tzero04_tmin16_tmax31_1state_corr_a3f2b1 | nmax=1, t_0=4
+2026-05-04T14:20:04Z [INFO] hadrana.fits.fit_c2pt:   two-state on [4, 31]: A0=1.05e-13 A1=4.2e-15 E0=0.3522 dE1=0.532 E1=0.884
+2026-05-04T14:20:04Z [INFO] hadrana.fits.fit_c2pt:   two-state valid=True converged=True chi2/dof=1.34 (p=0.124)
+2026-05-04T14:20:04Z [INFO] hadrana.fits.fit_c2pt:   t_min from criterion: 16 (Â_1 exp(-Ê_1 t) < err/4 first at t=16)
+2026-05-04T14:20:05Z [INFO] hadrana.fits.fit_c2pt:   one-state on [16, 31]: 2012 jackknife resamples
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt:   one-state: E_0 = 0.35171(66), A_0 = 9.36(12)e-14
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt:   chi2 = 17.84, ndof = 14, chi2/dof = 1.27, p = 0.215
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt:   cov_cond = 2.3e6, max |pull| = 1.94 at t=28
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt:   valid=True converged=True accurate_cov=True n_valid_jkn=2012/2012
+2026-05-04T14:20:09Z [INFO] hadrana.runs.serialise: saved /home/ck/phd/code/nucleon_analysis/results/c2pt_fits/nmax01/runs/20260504T1420Z_.../fits/D251_n01_tzero04_tmin16_tmax31_1state_corr_a3f2b1.h5
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt: FIT END | D251_n01_tzero04_tmin16_tmax31_1state_corr_a3f2b1
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt: 
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt: FIT START | D251_n01_tzero05_tmin16_tmax31_1state_corr_b5c9d3 | nmax=1, t_0=5
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt:   two-state on [5, 31]: A0=1.04e-13 A1=4.8e-15 E0=0.3520 dE1=0.518 E1=0.870
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt:   two-state valid=True converged=True chi2/dof=1.18 (p=0.244)
+2026-05-04T14:20:09Z [INFO] hadrana.fits.fit_c2pt:   t_min from criterion: 16
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt:   one-state: E_0 = 0.35169(67), A_0 = 9.35(13)e-14, chi2/dof = 1.23 (p = 0.235)
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt:   cov_cond = 2.4e6, max |pull| = 1.88 at t=28
+2026-05-04T14:20:13Z [INFO] hadrana.runs.serialise: saved .../fits/D251_n01_tzero05_tmin16_tmax31_1state_corr_b5c9d3.h5
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt: FIT END | D251_n01_tzero05_tmin16_tmax31_1state_corr_b5c9d3
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt: 
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt: FIT START | D251_n01_tzero08_..._e1d4a8 | nmax=1, t_0=8
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt:   two-state on [8, 31]: A0=1.02e-13 A1=2.1e-15 E0=0.3519 dE1=0.412 E1=0.764
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt:   two-state valid=True converged=True chi2/dof=0.91 (p=0.561)
+2026-05-04T14:20:13Z [WARNING] hadrana.fits.fit_c2pt: t_min criterion not satisfied in [8, 31] — SKIPPING fit
+2026-05-04T14:20:13Z [WARNING] hadrana.fits.fit_c2pt:   debug: at t=31 excited = 1.4e-19, threshold = 8.3e-19; criterion needs later t
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt: FIT SKIP | D251_n01_tzero08
+2026-05-04T14:20:13Z [INFO] hadrana.fits.fit_c2pt: 
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: ------------------------------------------------------------
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: RUN SUMMARY
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: ------------------------------------------------------------
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: fits attempted: 8
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: fits succeeded: 6
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: fits skipped:   2 (criterion not satisfied)
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: fits failed:    0
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: 
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: wall time: 10.2s
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: manifest:  /home/ck/phd/code/nucleon_analysis/results/c2pt_fits/nmax01/runs/20260504T1420Z_.../fits.parquet
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: ============================================================
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: RUN END
+2026-05-04T14:20:13Z [INFO] hadrana.runs.log: ============================================================

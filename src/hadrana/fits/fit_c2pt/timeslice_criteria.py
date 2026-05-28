@@ -7,7 +7,7 @@ def estimate_maximum_timeslice(
 ) -> int:
     """
         Determined upper bound of fit range
-        t_max in [t_0, nt - sink_distance] with SN > signal_to_noise_threshold
+        t_max in [t_0, t_cut] with SN > signal_to_noise_threshold
     """
 
     nt = len(c2pt_jkn_avg)
@@ -23,12 +23,12 @@ def estimate_maximum_timeslice(
     return maximum_timeslice
 
 def estimate_c2pt_minimum_timeslice(
-    c2pt_jkn_err: np.ndarray,
+    c2pt_jkn_err:      np.ndarray,
     initial_timeslice: int,
     maximum_timeslice: int,
-    A1_est: float,
-    E0_est: float,
-    dE1_est: float
+    A1_est:            float,
+    E0_est:            float,
+    dE1_est:           float
 ) -> int | None:
     """
         DESCRIPTION

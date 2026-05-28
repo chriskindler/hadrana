@@ -9,5 +9,5 @@
 - [x] Update notes
 
 ##### [Wed 13/05/2026]
-- [ ] runs/log.py outline
-- [ ] runs/serialise.py outline
+- [x] runs/log.py outline
+- [x] runs/serialise.py outline

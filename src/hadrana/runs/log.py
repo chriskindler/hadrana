@@ -1,5 +1,116 @@
+# hadrana/runs/log.py
+# DEFAULT
 import logging
+import sys
+import socket
+import getpass
+import platform
+import importlib.metadata
 from pathlib import Path
+from datetime import datetime, timezone
+
+# CUSTOM
+from hadrana.ensembles.ensemble_specs import ENSEMBLES
+
+LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+LOG_DATEFMT = "%Y-%m-%dT%H:%M:%SZ"
+
+def create_run_directory(ensemble: str, observable: str, run_id: str):
+    """
+    /home/ck/phd/results/c2pt_fits/D251
+        2026-04-30T14-22-D251-c2pt-fits-run-id/
+            config.json
+            run_id.log
+            fit_results/
+                nmax00_tzero04_tmax44.h5
+                    ├── /attrs                    # all manifest scalars duplicated as attrs
+                    ├── /data
+                    │   ├── c2pt                  (n_jkn, n_t)        # the input
+                    │   ├── timeslices            (n_fit,)
+                    │   ├── timeslices_extended   (n_density,)
+                    ├── /fit
+                    │   ├── A0_jkn                (n_jkn,)
+                    │   ├── E0_jkn                (n_jkn,)
+                    │   ├── valid_jkn             (n_jkn,) bool
+                    │   ├── model_eval_jkn_extended  (n_jkn, n_density)
+                    │   ├── cov                   (n_fit, n_fit)
+                    │   └── cov_inv               (n_fit, n_fit)
+                    └── /two_state_fit/...        # nested group with the seed fit
+                nmax00_tzero05_tmax44.h5
+                nmax00_tzero06_tmax44.h5
+                nmax00_tzero07_tmax44.h5
+        index.parquet
+    """
+    pass
+
+def log_setup(observable: str, run_dir: Path):
+    pass
+
+def log_run_start():
+    """ string for log file start"""
+    pass
+
+def log_ensemble_specs(ensemble: str):
+    pass
+
+def log_metadata(ensemble: str, observable: str):
+    pass
+
+def log_fit_diagnostic(ensemble: str, observable: str):
+    pass
+
+def log_summary(ensemble: str, observable: str):
+    """log most important information and"""
+    pass
+
+def log_run_end(ensemble: str, observable: str):
+    """ string for log file end, file export"""
+    pass
+
+
+"""
+    // PHASE MARKERS
+
+    PHASE A: RUN START
+
+    PHASE 1: ENSEMBLE SPECS
+        - id
+        - trajectory
+        - beta
+        - lattice spacing
+        - lattice dimension
+        - boundary conditions in time
+        - pion mass, kaon mass, LMpi, 
+        - original config number
+
+    PHASE 2: METADATA
+        - run-id
+        - timestamp
+        - hostname
+        - username
+        - code version (cora, hadrana) (git hash)
+        - import lib versions
+        - path to fit config file
+        - output fit config file for observable
+        
+    PHASE 3: DATA
+        - input data filepath (+ checksums)
+        - exceptional removal + indices
+
+    PHASE 4: FIT DIAGNOSTIC
+        - central value fit: summary
+        - resample fit: only aggregate
+        - table of results per nmax, t0 for c2pt fits 
+        - fit summary
+
+    PHASE 5: RUN SUMMARY
+        - Attempted / Succeeded / Skipped / Failed
+        - Total duration 
+        - Path to file output
+
+    PHASE Z: RUN END
+
+"""
 
 """
 DEBUG — things you'd only want when something went wrong:
@@ -88,3 +199,6 @@ def setup_logging(
 def get_logger(name: str) -> logging.Logger:
     """Convenience wrapper. Equivalent to logging.getLogger(name)."""
     return logging.getLogger(name)
+
+if __name__ == "__main__":
+    print("TEST LOG FILE GENERATION")

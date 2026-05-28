@@ -9,7 +9,7 @@ from iminuit.util import describe
 from scipy.stats import chi2 as chi2_dist
 from typing import Callable, Literal, Optional
 
-from cora.fit import fit, FitResult, compute_cov, compute_cov_inv
+from chigrad.fit import fit, FitResult, compute_cov, compute_cov_inv
 from hadrana.fits.fit_c2pt.models_c2pt import (
     get_model,
     estimate_c2pt_starting_values,
@@ -19,38 +19,40 @@ from hadrana.fits.fit_c2pt.timeslice_criteria import (
     estimate_maximum_timeslice,
 )
 
+from hadrana.runs.serialise import make_c2pt_fit_id, save_fit 
+
 # --------------------------------------------------------------------------------
 # C2PT FIT WRAPPER (with precomputed covariance)
 # --------------------------------------------------------------------------------
 
-
 def perform_c2pt_fit(
-    t_min:           int,
-    t_max:           int,
-    y_res:           np.ndarray,                              # (n_res, n_t)
-    cov_full:        np.ndarray,                              # (n_t, n_t) precomputed
+    t_start:         int,
+    t_final:         int,
+    y_res:           np.ndarray,
+    cov_full:        np.ndarray,
     resample_method: Literal["bootstrap", "jackknife"],
     model_id:        Literal["one-state", "two-state"],
     start_params:    dict[str, float],
     correlated:      bool,
     resample_fit:    bool,
     limits:          Optional[dict[str, tuple[float | None, float | None]]] = None,
-    tolerance:       float = 1e-4,
-    strategy:        int   = 1,
-    ncall:           int   = 10000,
+    *,
+    tolerance:       float,
+    strategy:        int,
+    ncall:           int,
 ) -> tuple[FitResult, Optional[list[FitResult]]]:
     """
-    Thin wrapper around cora.fit.fit for C2PT one-/two-state fits.
-    Uses a precomputed full covariance matrix and slices the relevant
-    sub-block for the [t_min, t_max] fit window.
+        Wrapper function around chigrad.fit for C2PT one/two-state fits.
+        Uses a precomputed full covariance matrix and slices the relevant
+        sub-block for the [t_min, t_max] fit window.
     """
     model, _ = get_model(model_id)
 
-    fit_range = np.arange(t_min, t_max + 1)
+    fit_range = np.arange(t_start, t_final + 1)
     t_data    = fit_range.astype(float)
-    y_window  = y_res[:, fit_range]                           # (n_res, n_t_fit)
+    y_window  = y_res[:, fit_range]
 
-    # Slice the sub-block of the full covariance and invert.
+    # slice the sub-block of the full covariance and invert
     if correlated:
         cov_window = cov_full[np.ix_(fit_range, fit_range)]
         cov_inv    = compute_cov_inv(cov_window)
@@ -78,7 +80,7 @@ def perform_c2pt_fit(
     )
 
 # --------------------------------------------------------------------------------
-# MODEL AVERAGE (arXiv:2309.05774)
+# MODEL AVERAGE 
 # --------------------------------------------------------------------------------
 
 def compute_model_average(
@@ -112,7 +114,7 @@ def compute_model_average(
     return mean, error, p
 
 # --------------------------------------------------------------------------------
-# DRIVER
+# MAIN
 # --------------------------------------------------------------------------------
 
 if __name__ == "__main__":
@@ -201,7 +203,6 @@ if __name__ == "__main__":
             window = np.arange(t_min, t_max + 1)
             ndata  = len(window)
 
-            # central values (back-transform A0)
             v               = central_one_state.values
             A0_phys_central = float(np.exp(v["A0"]))
             E0_central      = float(v["E0"])

@@ -21,3 +21,25 @@ __all__ = [
     "MEASUREMENTS_C2PT",
     "MEASUREMENTS_C3PT",
 ]
+
+ENSEMBLES = {
+    "D251": {
+        "trajectory": "TRM",
+        "boundary_conditions": "periodic",
+        "nt": 128,
+        "ns": 64,
+        "beta": 3.55,
+        "kappa_light": 0.137140,
+        "kappa_strange": 0.13672086,
+        "pion_mass_mev": 286,
+        "kaon_mass_mev": 467,
+        "csw": 1.8248654,
+        "lattice_spacing_fm": 0.064,
+        "source_set_numbers": [0, 1],
+        "source_sink_distances": [11, 14, 16, 19],
+        "configurations_total": 2013,
+        "exceptionals_total": 1,
+        "exceptionals_indices": [482],
+        "reweighted": True,
+    },
+}

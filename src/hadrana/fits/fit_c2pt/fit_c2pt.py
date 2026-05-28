@@ -100,8 +100,6 @@ def perform_c2pt_two_state_fit(
         cost  = two_state_cost,
         start = starting_values,
         limits = {"E0": (0, None), "A0": (0, None), "A1": (0, None), "dE1": (0, None)},
-
-
     )
 
     estimated_params = {p: two_state_result.values[p] for p in starting_values}
