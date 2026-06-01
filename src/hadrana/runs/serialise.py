@@ -72,6 +72,7 @@ def fit_results(
         "model_id":         fit_spec["model_id"],
         "resample_method":  resample_method,
         "correlation_type": fit_spec["correlation_type"],
+        "nsquare":          fit_spec["nsquare"],
         "bin_size":         fit_spec["bin_size"],
         # counts
         "ndata":            central.ndata,
@@ -153,7 +154,7 @@ def make_formfactor_fit_it():
 
 SCALAR_KEYS = (
     "run_id", "fit_id", "fit_hash", "timestamp", "ensemble", "model_id",
-    "resample_method", "correlation_type", "bin_size",
+    "resample_method", "correlation_type", "nsquare", "bin_size",
     "ndata", "npar", "ndof", "nres", "nvalid",
     "chi2", "chi2dof", "pvalue", "aic", "aicc",
     "valid", "converged", "accurate_cov", "fmin_edm",

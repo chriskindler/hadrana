@@ -24,9 +24,6 @@ from hadrana.fits.fit_c2pt.timeslice_criteria import (
 )
 
 from hadrana.loader import load_c2pt_per_nsquare
-
-from hadrana.runs.serialise import SCALAR_KEYS, save_fit
-
 from hadrana.runs.serialise import (
     Run,
     fit_results,
@@ -35,33 +32,36 @@ from hadrana.runs.serialise import (
     save_fit
 ) 
 
-"""
-1. Write c2pt fit wrapper
-2. Write full perform_c2pt_fit main function
-    PHASE 0:
-        Initialise run
-        Read c2pt base config via argparse
-        Construct fit config dictionary
+def print_fit_summary(label: str, fit, path: Path = None, resample_method: str = "jackknife"):
+    c    = fit.central
+    nres = len(fit.resample) if fit.resample else 0
+    nvalid = sum(r.valid for r in fit.resample) if fit.resample else 0
+    flag = "ok" if c.judge_fit else "fail"
+    if c.judge_fit and c.edm > 1e-3 * c.tolerance:
+        flag = "ok*"
 
-    PHASE 1:
-    Load source-momentum averaged forward-limit c2pt jackknife data from disk
-    Determine t_max with signal-to-noise threshold from c2pt jackknife data
-        for t_zero in initial_timeslices:
-            Estimate starting values from c2pt jackknife data
-            Perform central two-state fit per nsquare in the window [t_zero, t_max]
-                return A1, E0 and dE1
-            Determine t_min from excited-state criterion 
+    # resample errors (matches fit_results)
+    if fit.resample:
+        factor = np.sqrt(nres - 1) if resample_method == "jackknife" else 1.0
+        ddof   = 0 if resample_method == "jackknife" else 1
+        params_err = {
+            k: float(factor * np.std([r.params_est[k] for r in fit.resample], ddof=ddof))
+            for k in c.params_est
+        }
+    else:
+        params_err = c.params_err_hess
 
-    PHASE 2:
-        for t_zero in initial_timeslices:
-            Perform central and resample one-state fits per nsquare in the window [t_min, t_max]
-                return {A0_res, E0_res}
-            Compute central values and errors from {A0_res, E0_res}
-                
-    PHASE 3:
-        Serialise fit results
-
-"""
+    print(f"  [{label}] {flag} "
+          f"chi2/ndof = {c.chi2/c.ndof:.3f}  "
+          f"p = {c.pvalue:.3f}  "
+          f"valid_res = {nvalid}/{nres}  "
+          f"edm = {c.edm:.2e}")
+    for k, v in c.params_est.items():
+        g_hesse = gv.gvar(v, c.params_err_hess[k])
+        g_res   = gv.gvar(v, params_err[k])
+        print(f"      {k:>4s} = {g_res}  (hesse: {g_hesse})")
+    if path is not None:
+        print(f"      saved: {path.name}")
 
 def run_c2pt_fits(
     t_start:              int,
@@ -127,15 +127,16 @@ if __name__ == "__main__":
     # with open(args.filepath, "r") as f:
     #     cfg: dict = json.load(f)
 
-    print("SCALAR_KEYS:", SCALAR_KEYS)
+    # TODO: Find a way to make start params dict more flexible
+    def exclude_keys(d, keys):
+        return {x: d[x] for x in d if x not in keys}
 
     ensemble    = "D251"
     observable  = "c2pt"
     resample_type = "jackknife"
-    nsquare_values = [0]
+    nsquare_values = [0, 1, 2, 3, 4, 5, 6, 8]
     initial_timeslices = [3, 4, 5, 6, 7, 8]
     snr_threshold  = 5
-    t_zero = 5
 
     c2pt_per_nsquare = load_c2pt_per_nsquare(ensemble, nsquare_values)
 
@@ -143,11 +144,23 @@ if __name__ == "__main__":
         base_path  = Path("/home/ck/phd/results"),
         ensemble   = ensemble,
         observable = observable,
-        label      = "test-run10",
+        label      = "test-run16",
     )
 
     run_dir = run.create(exist_ok=True)
     hash_length = 6
+
+    base_spec = {
+        "ensemble":                 "D251",
+        "resample_type":            "jackknife",
+        "bin_size":                 1,
+        "correlation_type":         "uncorrelated",
+        "execute_central_fit":      True,
+        "starting_value_strategy": "data_driven",
+        "tolerance":                1e-5,
+        "strategy":                 2,
+        "ncall":                    10000,
+    }
 
     for nsquare in nsquare_values:
         
@@ -165,90 +178,140 @@ if __name__ == "__main__":
             signal_to_noise_threshold = snr_threshold,
         )
 
-        # FIT PARAMETERS
-        params_start = estimate_c2pt_starting_values(
-            c2pt_jkn = y,
-            t_start  = t_zero,
-            t_final  = t_max
-        )
+        for t_zero in initial_timeslices:
+            print(f"\n=== nsquare={nsquare}, t_zero={t_zero}, t_max={t_max} ===")
+            # FIT PARAMETERS
+            params_start = estimate_c2pt_starting_values(
+                c2pt_jkn = y,
+                t_start  = t_zero,
+                t_final  = t_max
+            )
 
-        params_limit = {
-            "A0":  (0, None),
-            "E0":  (0, None),
-            "A1":  (0, None),
-            "dE1": (0, None),
-        }
+            params_limit = {
+                "A0":  (0, None),
+                "E0":  (0, None),
+                "A1":  (0, None),
+                "dE1": (0, None),
+            }
 
-        base_spec = {
-            # general
-            "ensemble":                 "D251",
-            "resample_type":            "jackknife",
-            "bin_size":                 1,
-            "correlation_type":         "uncorrelated",
-            "execute_central_fit":      True,
-            "starting_value_strategy": "data_driven",
-            "tolerance":                1e-4,
-            "strategy":                 1,
-            "ncall":                    10000,
-        }
+            fit_spec = {
+                **base_spec,
+                "nsquare":              nsquare,
+                "execute_resample_fit": True,
+                "model_id":             "two-state-exp",
+                "t_start":              t_zero,
+                "t_final":              t_max,
+                "bin_size":             1,
+                "params_start":         params_start,
+                "params_limit":         params_limit,
+            }
 
-        fit_spec = {
-            **base_spec,
-            "nsquare":              nsquare,
-            "execute_resample_fit": True,
-            "model_id":             "two-state-exp",
-            "t_start":              t_zero,
-            "t_final":              t_max,
-            "bin_size":             1,
-            "params_start":         params_start,
-            "params_limit":         params_limit,
-        }
+            # ====================================================
+            # TWO-STATE FIT
+            # ====================================================
 
-        two_state_fit = run_c2pt_fits(
-            t_start              = fit_spec["t_start"],
-            t_final              = fit_spec["t_final"],
-            y                    = y,
-            correlation_type     = fit_spec["correlation_type"],
-            resample_type        = fit_spec["resample_type"],
-            execute_central_fit  = fit_spec["execute_central_fit"],
-            execute_resample_fit = fit_spec["execute_resample_fit"],
-            model_id             = fit_spec["model_id"],
-            params_start         = fit_spec["params_start"],
-            params_limit         = fit_spec["params_limit"],
-            tolerance            = fit_spec["tolerance"], 
-            strategy             = fit_spec["strategy"],
-            ncall                = fit_spec["ncall"]
-        )
+            two_state_fit = run_c2pt_fits(
+                t_start              = fit_spec["t_start"],
+                t_final              = fit_spec["t_final"],
+                y                    = y,
+                correlation_type     = fit_spec["correlation_type"],
+                resample_type        = fit_spec["resample_type"],
+                execute_central_fit  = fit_spec["execute_central_fit"],
+                execute_resample_fit = fit_spec["execute_resample_fit"],
+                model_id             = fit_spec["model_id"],
+                params_start         = fit_spec["params_start"],
+                params_limit         = fit_spec["params_limit"],
+                tolerance            = fit_spec["tolerance"], 
+                strategy             = fit_spec["strategy"],
+                ncall                = fit_spec["ncall"]
+            )
 
-        print(two_state_fit.central.params_est)
+            fit_hash = make_fit_hash(fit_spec, hash_length)
+            fit_id   = make_c2pt_fit_id(fit_spec, hash_length)
 
-        fit_hash = make_fit_hash(fit_spec, hash_length)
-        fit_id   = make_c2pt_fit_id(fit_spec, hash_length)
+            result = fit_results(
+                run_id          = run.run_id,
+                fit_id          = fit_id,
+                fit_hash        = fit_hash,
+                fit_spec        = fit_spec,
+                central         = two_state_fit.central,
+                resample        = two_state_fit.resample,
+                resample_method = fit_spec["resample_type"],
+            )
 
-        result = fit_results(
-            run_id          = run.run_id,
-            fit_id          = fit_id,
-            fit_hash        = fit_hash,
-            fit_spec        = fit_spec,
-            central         = two_state_fit.central,
-            resample        = two_state_fit.resample, # None — execute_resample_fit=False
-            resample_method = fit_spec["resample_type"],
-        )
+            path_two = save_fit(result, run_dir, fit_id)
+            print_fit_summary("two-state", two_state_fit, path_two)
 
-        save_fit(result, run_dir, fit_id)
+            if not two_state_fit.central.judge_fit:
+                print(f"two-state INVALID, skip one-state")
+                continue
 
-        A1_est  = two_state_fit.central.params_est["A1"]
-        E0_est  = two_state_fit.central.params_est["E0"]
-        dE1_est = two_state_fit.central.params_est["dE1"]
-        
+            A1_est  = two_state_fit.central.params_est["A1"]
+            E0_est  = two_state_fit.central.params_est["E0"]
+            dE1_est = two_state_fit.central.params_est["dE1"]
 
-        t_min = estimate_c2pt_minimum_timeslice(
-            c2pt_jkn_err      = y_err,
-            initial_timeslice = t_zero,
-            maximum_timeslice = t_max,
-            A1_est            = A1_est,
-            E0_est            = E0_est,
-            dE1_est           = dE1_est,
-        )
+            t_min = estimate_c2pt_minimum_timeslice(
+                c2pt_jkn_err      = y_err,
+                initial_timeslice = t_zero,
+                maximum_timeslice = t_max,
+                A1_est            = A1_est,
+                E0_est            = E0_est,
+                dE1_est           = dE1_est,
+            )
 
+            print(f"t_min from excited-state criterion: {t_min}")
+            if t_min is None:
+                print(f"t_min criterion not satisfied for t_zero = {t_zero}, skip one-state fit")
+                continue
 
+            # ====================================================
+            # ONE-STATE FIT
+            # ====================================================
+
+            # update params dict
+            params_start = exclude_keys(params_start, {"A1", "dE1"})
+            params_limit = exclude_keys(params_limit, {"A1", "dE1"})
+
+            fit_spec = {
+                **base_spec,
+                "nsquare":              nsquare,
+                "execute_resample_fit": True,
+                "model_id":             "one-state-exp",
+                "t_start":              t_min,
+                "t_final":              t_max,
+                "bin_size":             1,
+                "params_start":         params_start,
+                "params_limit":         params_limit,
+            }
+
+            one_state_fit = run_c2pt_fits(
+                t_start              = fit_spec["t_start"],
+                t_final              = fit_spec["t_final"],
+                y                    = y,
+                correlation_type     = fit_spec["correlation_type"],
+                resample_type        = fit_spec["resample_type"],
+                execute_central_fit  = fit_spec["execute_central_fit"],
+                execute_resample_fit = fit_spec["execute_resample_fit"],
+                model_id             = fit_spec["model_id"],
+                params_start         = fit_spec["params_start"],
+                params_limit         = fit_spec["params_limit"],
+                tolerance            = fit_spec["tolerance"], 
+                strategy             = fit_spec["strategy"],
+                ncall                = fit_spec["ncall"]
+            )
+
+            fit_hash = make_fit_hash(fit_spec, hash_length)
+            fit_id   = make_c2pt_fit_id(fit_spec, hash_length)
+
+            result = fit_results(
+                run_id          = run.run_id,
+                fit_id          = fit_id,
+                fit_hash        = fit_hash,
+                fit_spec        = fit_spec,
+                central         = one_state_fit.central,
+                resample        = one_state_fit.resample,
+                resample_method = fit_spec["resample_type"],
+            )
+
+            path_one = save_fit(result, run_dir, fit_id)
+            print_fit_summary("one-state", one_state_fit, path_one)
