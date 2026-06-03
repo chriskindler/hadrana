@@ -4,65 +4,74 @@ from hadrana.c2pt.compute_c2pt import compute_c2pt_jkn_fwd, compute_c2pt_jkn_fwd
 """
 D251_c2pt_jkn.h5/
     c2pt/
-        nsquare_0/
+        nsquare00/
             /fwd
             /fwd_bwd_avg
-        nsquare_1/
+        nsquare01/
             /fwd
             /fwd_bwd_avg
-        nsquare_2/
+        nsquare02/
             /fwd
             /fwd_bwd_avg
-        nsquare_3/
+        nsquare03/
             /fwd
             /fwd_bwd_avg
-        nsquare_4/
+        nsquare04/
             /fwd
             /fwd_bwd_avg
-        nsquare_5/
+        nsquare05/
             /fwd
             /fwd_bwd_avg
-        nsquare_6/
+        nsquare06/
             /fwd
             /fwd_bwd_avg
-        nsquare_8/
+        nsquare08/
             /fwd
             /fwd_bwd_avg
 
     c2pt_ratio/
-        nsquare_1/
-        nsquare_2/
-        nsquare_3/
-        nsquare_4/
-        nsquare_5/
-        nsquare_6/
-        nsquare_8/
+        nsquare01/
+        nsquare02/
+        nsquare03/
+        nsquare04/
+        nsquare05/
+        nsquare06/
+        nsquare08/
 """
 
-def export_c2pt_jkn(ensemble: str, nsquares: list[int]):
+def export_c2pt_jkn(ensemble: str, nsquares: list[int], bin_size: int):
     export_path = f"/hdd/data/ensemble_data/{ensemble}/c2pt"
-    export_name = f"{ensemble}_c2pt_jkn.h5"
+    export_name = f"{ensemble}_c2pt_binsize{bin_size:02d}_jkn.h5"
     
     with h5py.File(f"{export_path}/{export_name}", "w") as f:
         f.attrs["ensemble"] = ensemble
         f.attrs["resampling"] = "jackknife"
-        f.attrs["bin_size"] = 1
+        f.attrs["bin_size"] = bin_size
         f.attrs["reweighted"] = True
         f.attrs["exceptionals_excluded"] = True
         f.attrs["averaging"] = "source positions and equivalent momenta"
+        print("Generate c2pt jackknife per nsquare")
         for nsquare in nsquares:
-            c2pt_fwd_jkn = compute_c2pt_jkn_fwd(ensemble, nsquare)
-            f.create_dataset(f"c2pt/nsquare_{nsquare}/fwd", data = c2pt_fwd_jkn)
+            print(f"nsquare = {nsquare}")
+            print(f"c2pt fwd")
 
-            c2pt_fwd_bwd_avg_jkn = compute_c2pt_jkn_fwd_bwd_avg(ensemble, nsquare)
-            f.create_dataset(f"c2pt/nsquare_{nsquare}/fwd_bwd_avg", data = c2pt_fwd_bwd_avg_jkn)
+            c2pt_fwd_jkn = compute_c2pt_jkn_fwd(ensemble, nsquare, bin_size)
+            f.create_dataset(f"c2pt/nsquare{nsquare:02d}/fwd", data = c2pt_fwd_jkn)
 
+            print(f"c2pt fwd bwd avg")
+            c2pt_fwd_bwd_avg_jkn = compute_c2pt_jkn_fwd_bwd_avg(ensemble, nsquare, bin_size)
+            f.create_dataset(f"c2pt/nsquare{nsquare:02d}/fwd_bwd_avg", data = c2pt_fwd_bwd_avg_jkn)
+
+            print(f"c2pt ratio")
             if nsquare != 0:
-                c2pt_ratio_jkn = compute_c2pt_ratio_jkn(ensemble, nsquare)
-                f.create_dataset(f"c2pt_ratio/nsquare_{nsquare}", data = c2pt_ratio_jkn)
+                c2pt_ratio_jkn = compute_c2pt_ratio_jkn(ensemble, nsquare, bin_size)
+                f.create_dataset(f"c2pt_ratio/nsquare{nsquare}", data = c2pt_ratio_jkn)
+            print(f"nsquare = {nsquare} done")
+            print()
 
 if __name__ == "__main__":
     ensemble = "D251"
+    bin_size = 2
     nsquares = [0, 1, 2, 3, 4, 5, 6, 8]
 
-    export_c2pt_jkn(ensemble, nsquares)    
+    export_c2pt_jkn(ensemble, nsquares, bin_size)    

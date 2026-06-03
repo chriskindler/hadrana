@@ -19,6 +19,7 @@ from hadrana.fits.fit_c2pt.models_c2pt import (
     estimate_c2pt_starting_values,
 )
 from hadrana.fits.fit_c2pt.timeslice_criteria import (
+    estimate_initial_timeslices,
     estimate_c2pt_minimum_timeslice,
     estimate_maximum_timeslice,
 )
@@ -131,20 +132,26 @@ if __name__ == "__main__":
     def exclude_keys(d, keys):
         return {x: d[x] for x in d if x not in keys}
 
-    ensemble    = "D251"
-    observable  = "c2pt"
-    resample_type = "jackknife"
-    nsquare_values = [0, 1, 2, 3, 4, 5, 6, 8]
-    initial_timeslices = [3, 4, 5, 6, 7, 8]
-    snr_threshold  = 5
+    ensemble        = "D251"
+    observable      = "c2pt"
+    resample_type   = "jackknife"
+    bin_size        = 2
+    momentum_shells = [0, 1, 2, 3, 4, 5, 6, 8]
+    correlation_type = "uncorrelated"
+    snr_threshold   = 5
 
-    c2pt_per_nsquare = load_c2pt_per_nsquare(ensemble, nsquare_values)
+    """
+        Construct dynamic array depending on lattice spacing of ensmeble data
+        t_zero_max = t_phys // a 
+    """
+
+    c2pt_per_nsquare = load_c2pt_per_nsquare(ensemble, momentum_shells, bin_size)
 
     run = Run.initialise(
         base_path  = Path("/home/ck/phd/results"),
         ensemble   = ensemble,
         observable = observable,
-        label      = "test-run16",
+        label      = "test-run21",
     )
 
     run_dir = run.create(exist_ok=True)
@@ -153,8 +160,8 @@ if __name__ == "__main__":
     base_spec = {
         "ensemble":                 "D251",
         "resample_type":            "jackknife",
-        "bin_size":                 1,
-        "correlation_type":         "uncorrelated",
+        "bin_size":                 bin_size,
+        "correlation_type":         correlation_type,
         "execute_central_fit":      True,
         "starting_value_strategy": "data_driven",
         "tolerance":                1e-5,
@@ -162,9 +169,7 @@ if __name__ == "__main__":
         "ncall":                    10000,
     }
 
-    for nsquare in nsquare_values:
-        
-        #nmax         = 0
+    for nsquare in momentum_shells:
         y     = c2pt_per_nsquare[nsquare]
         nres  = y.shape[0]
 
@@ -176,6 +181,14 @@ if __name__ == "__main__":
             c2pt_jkn_avg              = y_cen,
             c2pt_jkn_err              = y_err,
             signal_to_noise_threshold = snr_threshold,
+        )
+
+        initial_timeslices = estimate_initial_timeslices(
+            a_fm   = 0.064,
+            t_max  = t_max,
+            t_phys = 0.3,
+            t_start = 2,
+            min_window = 4,
         )
 
         for t_zero in initial_timeslices:
@@ -201,7 +214,7 @@ if __name__ == "__main__":
                 "model_id":             "two-state-exp",
                 "t_start":              t_zero,
                 "t_final":              t_max,
-                "bin_size":             1,
+                "bin_size":             bin_size,
                 "params_start":         params_start,
                 "params_limit":         params_limit,
             }
@@ -279,7 +292,7 @@ if __name__ == "__main__":
                 "model_id":             "one-state-exp",
                 "t_start":              t_min,
                 "t_final":              t_max,
-                "bin_size":             1,
+                "bin_size":             bin_size,
                 "params_start":         params_start,
                 "params_limit":         params_limit,
             }
@@ -314,4 +327,7 @@ if __name__ == "__main__":
             )
 
             path_one = save_fit(result, run_dir, fit_id)
+            print(f"binsize={bin_size}")
+            print(f"INITIAL TIMESLICES = {initial_timeslices}")
+            print(f"FIT RANGE ONE-STATE = [{t_min, t_max}]")
             print_fit_summary("one-state", one_state_fit, path_one)

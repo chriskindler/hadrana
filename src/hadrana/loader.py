@@ -62,12 +62,12 @@ def load_rwfs(ensemble: str) -> np.ndarray:
     
     return rwfs
 
-def load_c2pt_per_nsquare(ensemble: str, nsquare_values: list[int]): 
+def load_c2pt_per_nsquare(ensemble: str, nsquare_values: list[int], bin_size: int): 
     c2pt_per_nsquare = {}
-    path = f"/hdd/data/ensemble_data/{ensemble}/c2pt/{ensemble}_c2pt_jkn.h5"
+    path = f"/hdd/data/ensemble_data/{ensemble}/c2pt/{ensemble}_c2pt_binsize{bin_size:02d}_jkn.h5"
     with h5py.File(path, "r") as file:
         for nsquare in nsquare_values:
-            c2pt_per_nsquare[nsquare] = file[f"/c2pt/nsquare_{nsquare}/fwd_bwd_avg"][()]
+            c2pt_per_nsquare[nsquare] = file[f"/c2pt/nsquare{nsquare:02d}/fwd_bwd_avg"][()]
     return c2pt_per_nsquare
 
 

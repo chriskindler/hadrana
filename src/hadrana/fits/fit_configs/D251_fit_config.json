@@ -1,6 +1,7 @@
 {
     "meta": {
         "ensemble": "D251",
+        "a_fm": 0.065,
         "resample_type": "jackknife",
         "bin_size": 1,
         "correlation_type": "uncorrelated",

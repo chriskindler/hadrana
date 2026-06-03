@@ -1,5 +1,10 @@
 import numpy as np 
 
+def estimate_initial_timeslices(a_fm, t_max, t_phys, t_start, min_window=4):
+    t0_max = int(t_phys / a_fm)
+    t0_max = min(t0_max, t_max - min_window)
+    return list(range(t_start, t0_max + 1)) if t0_max >= t_start else []
+
 def estimate_maximum_timeslice(
     c2pt_jkn_avg: np.ndarray,
     c2pt_jkn_err: np.ndarray,
@@ -103,3 +108,25 @@ def estimate_c2pt_ratio_minimum_timeslice(
         return None
     minimum_timeslice = int(window[np.argmax(satisfied)])
     return minimum_timeslice
+
+if __name__ == "__main__":
+    a = 0.064
+    t_max = 44
+    t_phys = 0.4
+    t_start = 2
+    hbarc = 0.1973
+
+    timeslices = estimate_initial_timeslices(
+        a_fm = a, 
+        t_max = t_max,
+        t_phys=t_phys,
+        t_start=t_start,
+        min_window=4
+    )
+
+    t_zero_max = hbarc/0.5
+    t_phys_meas = t_zero_max / a
+    print(t_phys_meas)
+    print(f"t_zero_max = {hbarc / 0.5}")
+    print(f"t_phys = {t_phys} fm")
+    print(timeslices)

@@ -48,19 +48,31 @@ def fit_results(
     params_err    = {}
     params_res    = {}
 
+    # TODO: Include effective masses evaulated at fit functions
+
     if resample:
         nres   = len(resample)
         keys   = list(central.params_est.keys())
         factor = np.sqrt(nres - 1) if resample_method == "jackknife" else 1.0
         ddof   = 0 if resample_method == "jackknife" else 1
-
-        y_fit_res_ext = np.array([r.y_fit_ext for r in resample])
+        y_fit_res_ext = np.array([r.y_fit_ext for r in resample])   # (nres, n_ext)
         y_fit_err_ext = factor * np.std(y_fit_res_ext, axis=0, ddof=ddof)
+
+        # --- effective mass band: log-ratio INSIDE each resample, THEN std ---
+        dt_ext = (central.t_ext[1] - central.t_ext[0])
+        # central Eeff curve
+        Eeff_cen_ext = np.log(central.y_fit_ext[:-1] / central.y_fit_ext[1:]) / dt_ext
+        # per-resample Eeff curves, then jackknife/bootstrap error
+        Eeff_res_ext = np.log(y_fit_res_ext[:, :-1] / y_fit_res_ext[:, 1:]) / dt_ext
+        Eeff_err_ext = factor * np.std(Eeff_res_ext, axis=0, ddof=ddof)
+        # ---------------------------------------------------------------------
 
         params_res = {k: np.array([r.params_est[k] for r in resample]) for k in keys}
         params_err = {k: float(factor * np.std(params_res[k], ddof=ddof)) for k in keys}
-
         valid_res  = np.array([r.valid for r in resample])
+    else:
+        Eeff_cen_ext = None
+        Eeff_err_ext = None
 
     result = {
         # identification
@@ -104,6 +116,8 @@ def fit_results(
         "y_fit":            central.y_fit,
         "y_fit_cen_ext":    central.y_fit_ext,
         "y_fit_err_ext":    y_fit_err_ext,
+        "Eeff_cen_ext":     Eeff_cen_ext,
+        "Eeff_err_ext":     Eeff_err_ext,
         "valid_res":        valid_res,
         # dicts
         "params_start":     fit_spec.get("params_start", {}) or {},
@@ -163,7 +177,7 @@ SCALAR_KEYS = (
 )
 ARRAY_KEYS = (
     "fit_range", "fit_range_ext", "residuals",
-    "y_fit", "y_fit_cen_ext", "y_fit_err_ext", "valid_res",
+    "y_fit", "y_fit_cen_ext", "y_fit_err_ext", "Eeff_cen_ext", "Eeff_err_ext", "valid_res",
 )
 DICT_KEYS = (
     "params_start", "params_limit",
@@ -234,48 +248,3 @@ def write_manifest(rows: list[dict], run_dir: Path) -> Path:
     out = run_dir / "fits.parquet"
     pd.DataFrame(rows).to_parquet(out, index=False)
     return out
-
-if __name__ == "__main__":
-    base_config = {
-        "ensemble": "D251",
-        "nsquare": 1,
-        "bin_size": 1,
-        "t_min": 13,
-        "t_max": 44,
-        "start_params": None,
-        "model_id": "one-state-exp",
-        "correlation_type": "uncorrelated",
-        "tolerance": 1e-4,
-        "strategy": 1,
-        "ncall": 10000,
-    }
-
-    run_id = "run03"
-
-    ensemble   = "D251"
-    observable = "c2pt" 
-    base_path  = Path("/home/ck/phd/results")
-
-    hash_length: int = 12
-
-    # run     = Run.initialise(base_path, ensemble, observable, run_id)
-    # run_dir = run.create(exist_ok=False)
-
-    # print(run_dir)
-
-    model_id = "one-state-exp"
-    initial_timeslices = [3, 4, 5, 6, 7, 8]
-
-    """
-    def make_c2pt_fit_id(
-    ensemble:    str,
-    fit_config:  dict,
-    hash_length: int,
-    t_zero:      Optional[int] = None,
-)
-    """
-
-    for t_zero in initial_timeslices:
-        fit_config = {**base_config, "t_zero": t_zero}
-        fit_id = make_c2pt_fit_id(fit_config)
-        print(fit_id)
