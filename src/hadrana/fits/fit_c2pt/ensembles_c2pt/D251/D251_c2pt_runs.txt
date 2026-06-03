@@ -1,0 +1,26 @@
+test-run20
+    binsize = 1
+    tphys = 0.3
+    common correlation type for both two-state and one-state fit
+        => uncorrelated one-state fit range not determined from correlated two-state fit
+
+test-run21
+    binsize = 2
+    tphys = 0.3
+    common correlation type for both two-state and one-state fit
+        => uncorrelated one-state fit range not determined from correlated two-state fit
+
+test-run22
+    binsize = 2
+    tphys = 0.3
+    correlated two-state fits to determine tmin
+    reject two-state if chi2dof = 2.0
+        => skip corresponding t0 for one-state fit
+    uncorrelated/correlated one-state fits 
+        => only one surviving t0 = 4 across all nsquare
+
+test-run23
+    binsize = 2
+    correlated two-state fits to determine tmin
+    same as test-run22, but with tphys = 0.45
+        => more accepted t0
