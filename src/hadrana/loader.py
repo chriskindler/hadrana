@@ -71,16 +71,25 @@ def load_c2pt_per_nsquare(ensemble: str, nsquare_values: list[int], bin_size: in
     return c2pt_per_nsquare
 
 
-# def load_rwfs(ensemble: str) -> np.ndarray:
-#     """Load reweighting factors (RWTM2_EO * RWRAT) concatenated across replicas."""
-#     ens = EnsembleHelpers(ensemble)
-#     base = f"/hdd/data/ensemble_data/{ensemble}/rwfs"
-#
-#     rwfs_per_replica = []
-#     for replica in ens.get_replicas():
-#         path = f"{base}/{ensemble}{replica}.rwms.txt"
-#         data = np.loadtxt(path)
-#         rwfs_per_replica.append(data[:, 1] * data[:, 2])
-#
-#     return np.concatenate(rwfs_per_replica)
-
+def load_fits(run_dir, ensemble, nsquare, model_id, correlation_type, bin_size):
+    signature = (f"{ensemble}-c2pt-nsquare{nsquare:02d}-binsize{bin_size:02d}"
+                 f"-tmin*-tmax*-{model_id}-{correlation_type}.h5")
+    fits = []
+    for p in sorted(run_dir.glob(signature)):
+        with h5py.File(p, "r") as f:
+            d = {
+                "tmin":    int(f["scalars/fit_range_min"][()]),
+                "tmax":    int(f["scalars/fit_range_max"][()]),
+                "chi2dof": float(f["scalars/chi2dof"][()]),
+                "E0":      float(f["dicts/params_cen"].attrs["E0"]),
+                "E0_err_jkn":  float(f["dicts/params_err"].attrs["E0"]),
+                "E0_err_hess": float(f["dicts/params_err_hesse"].attrs["E0"]),
+                "t_ext":         f["arrays/fit_range_ext"][()].flatten(),
+                "y_fit_ext":     f["arrays/y_fit_cen_ext"][()].flatten(),
+                "y_fit_err_ext": f["arrays/y_fit_err_ext"][()].flatten(),
+                "Eeff_cen_ext":  f["arrays/Eeff_cen_ext"][()].flatten(),
+                "Eeff_err_ext":  f["arrays/Eeff_err_ext"][()].flatten(),
+            }
+            d["E0_err"] = d["E0_err_jkn"]   # primary = jackknife
+        fits.append(d)
+    return fits

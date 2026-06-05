@@ -1,9 +1,8 @@
 import numpy as np 
 
-def estimate_initial_timeslices(a_fm, t_max, t_phys, t_start, min_window=4):
+def estimate_initial_timeslices(a_fm, t_start, t_phys):
     t0_max = int(t_phys / a_fm)
-    t0_max = min(t0_max, t_max - min_window)
-    return list(range(t_start, t0_max + 1)) if t0_max >= t_start else []
+    return list(range(t_start, t0_max + 1))
 
 def estimate_maximum_timeslice(
     c2pt_jkn_avg: np.ndarray,
@@ -12,20 +11,14 @@ def estimate_maximum_timeslice(
 ) -> int:
     """
         Determined upper bound of fit range
-        t_max in [t_0, t_cut] with SN > signal_to_noise_threshold
+        t_max in [t_0, t_cut] with SN <= signal_to_noise_threshold
     """
-
     nt = len(c2pt_jkn_avg)
     t_cut = nt // 2
-
-    # signal-to-noise ratio
     snr = c2pt_jkn_avg / c2pt_jkn_err
-
-    # signal-to-noise cutoff criterion
-    valid_timeslices = np.where(snr[:t_cut] > signal_to_noise_threshold)[0]
-
-    maximum_timeslice = int(valid_timeslices.max())
-    return maximum_timeslice
+    below = np.where(snr[:t_cut] <= signal_to_noise_threshold)[0]
+    tmax = int(below[0] - 1) if below.size else t_cut - 1 
+    return tmax
 
 def estimate_c2pt_minimum_timeslice(
     c2pt_jkn_err:      np.ndarray,
