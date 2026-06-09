@@ -7,7 +7,7 @@ from pathlib import Path
 from hadrana.ensembles.helpers import EnsembleHelpers
 from hadrana.momenta import get_momentum_shell
 
-def load_rwfs(ensemble: str) -> np.ndarray:
+def load_rwfs(ensemble: str) -> tuple[np.ndarray, Path]:
     # if "rqcd" in ensemble:
     #     return np.ones(len(settings.get_total_config_list(ensemble)))
     ens = EnsembleHelpers(ensemble)
@@ -52,15 +52,28 @@ def load_rwfs(ensemble: str) -> np.ndarray:
 
         if not rwf_path.exists():
             raise RuntimeError("RWF not found")
-      
+
         with open(rwf_path, 'r') as f:
             cfg_rwf_tmp = np.loadtxt(f)
-            _rwf = cfg_rwf_tmp[:,1] 
-            _rwf*= cfg_rwf_tmp[:,2] 
+        _cfg = cfg_rwf_tmp[:,0].astype(int)
+        _rwf = cfg_rwf_tmp[:,1] 
+        _rwf*= cfg_rwf_tmp[:,2] 
+
+        if len(rwfs[slice_]) < len(_rwf):
+            delete_indices= [
+                cfg_idx for cfg_idx,cfg_nr in enumerate(_cfg) 
+                    if cfg_nr not in ens.get_config_list(int(replica[1:]))
+            ]
+
+            _rwf = np.delete( _rwf, delete_indices, axis = 0 )
+        elif len(rwfs[slice_]) > len(_rwf):
+            raise RuntimeError(
+                f"Found less rwfs as registered configurations: {len(_rwf)=}, len(cfgs)={len(ens.get_config_list(int(replica[1:])))}\n{rwf_path}"
+            )
 
         rwfs[slice_] = _rwf
     
-    return rwfs
+    return rwfs, rwf_path
 
 def load_c2pt_per_nsquare(ensemble: str, nsquare_values: list[int], bin_size: int): 
     c2pt_per_nsquare = {}

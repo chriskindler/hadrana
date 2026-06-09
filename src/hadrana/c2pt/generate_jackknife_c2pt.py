@@ -1,43 +1,8 @@
 import h5py
+import numpy as np
+
 from hadrana.c2pt.compute_c2pt import compute_c2pt_jkn_fwd, compute_c2pt_jkn_fwd_bwd_avg, compute_c2pt_ratio_jkn
-
-"""
-D251_c2pt_jkn.h5/
-    c2pt/
-        nsquare00/
-            /fwd
-            /fwd_bwd_avg
-        nsquare01/
-            /fwd
-            /fwd_bwd_avg
-        nsquare02/
-            /fwd
-            /fwd_bwd_avg
-        nsquare03/
-            /fwd
-            /fwd_bwd_avg
-        nsquare04/
-            /fwd
-            /fwd_bwd_avg
-        nsquare05/
-            /fwd
-            /fwd_bwd_avg
-        nsquare06/
-            /fwd
-            /fwd_bwd_avg
-        nsquare08/
-            /fwd
-            /fwd_bwd_avg
-
-    c2pt_ratio/
-        nsquare01/
-        nsquare02/
-        nsquare03/
-        nsquare04/
-        nsquare05/
-        nsquare06/
-        nsquare08/
-"""
+from hadrana.statistics import maximum_binsize
 
 def export_c2pt_jkn(ensemble: str, nsquares: list[int], bin_size: int):
     export_path = f"/hdd/data/ensemble_data/{ensemble}/c2pt"
@@ -70,8 +35,19 @@ def export_c2pt_jkn(ensemble: str, nsquares: list[int], bin_size: int):
             print()
 
 if __name__ == "__main__":
-    ensemble = "D251"
-    bin_size = 2
-    nsquares = [0, 1, 2, 3, 4, 5, 6, 8]
+    ensemble = "J501"
+    momentum_shells = [0, 1, 2, 3, 4, 5, 6, 8]
 
-    export_c2pt_jkn(ensemble, nsquares, bin_size)    
+    from hadrana.loader import load_rwfs
+
+    rwfs, rwfs_path = load_rwfs(ensemble)
+    ncfg = rwfs.shape[0]
+
+    binsizes = [1, 2, 4, 8, 16, 32, 64, maximum_binsize(ncfg)]
+
+    print(f"BINSIZES = {binsizes}")
+    print(f"maximum binsize = {np.max(binsizes)}")
+    
+    for s in binsizes:
+        print(f"binsize = {s}")
+        export_c2pt_jkn(ensemble, momentum_shells, s)    

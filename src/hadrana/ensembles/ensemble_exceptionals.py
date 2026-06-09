@@ -1,5 +1,6 @@
 _EXCEPTIONAL_CONFIGURATION_NUMBERS = {
     # A
+    "A654": {"rwfs": [], "cfgs": []},
     # B
     # C
     # D
@@ -7,6 +8,7 @@ _EXCEPTIONAL_CONFIGURATION_NUMBERS = {
     # E
     # H
     # J
+    "J501": {"rwfs": [], "cfgs": []},
     # S
     # U
     # X

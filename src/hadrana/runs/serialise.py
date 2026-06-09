@@ -146,6 +146,7 @@ def make_c2pt_fit_id(fit_spec: dict, hash_length: int) -> str:
     elements = [
         fit_spec["ensemble"], "c2pt",
         f"nsquare{fit_spec["nsquare"]:02d}",
+        f"binsize{fit_spec["binsize"]:02d}",
         f"tmin{fit_spec['t_start']:02d}",
         f"tmax{fit_spec['t_final']:02d}",
         model_id, fit_spec["correlation_type"]

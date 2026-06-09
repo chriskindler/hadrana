@@ -1,5 +1,30 @@
 import numpy as np
 
+def maximum_binsize(ncfg: int):
+    return ncfg // 20
+
+def generate_binsize_interval(maximum_binsize: int) -> list[int]:
+    FINE_MAX   = 20    # dense integer block: where the rise of R(S) lives
+    COARSE_MAX = 100   # sparse tail: flat region, adjacent points redundant
+    COARSE_STEP = 10
+
+    binsizes = []
+
+    # fine region: every integer 1 .. min(20, s_max)
+    for s in range(1, min(FINE_MAX, maximum_binsize) + 1):
+        binsizes.append(s)
+
+    # coarse tail: 30, 40, ... up to min(100, s_max)
+    s = FINE_MAX
+    while s + COARSE_STEP <= min(COARSE_MAX, maximum_binsize):
+        s += COARSE_STEP
+        binsizes.append(s)
+
+    # always anchor the ceiling
+    binsizes.append(maximum_binsize)
+
+    return sorted(set(binsizes))
+
 def bin_data(data: np.ndarray, rwfs: np.ndarray, bin_size: int):
     """
     input:
@@ -74,3 +99,53 @@ def generate_bootstrap_ensemble(data: np.ndarray, rwfs: np.ndarray, n_bst: int, 
         w = rwfs[bidx].reshape(n_cfg, *([1] * (data.ndim - 1)))
         data_bst[b] = np.sum(w * y, axis=0) / np.sum(w)
     return data_bst
+
+def identify_small_rwf_indices(rwfs: np.ndarray) -> np.ndarray:
+    """
+        input: rwfs - np.ndarray: dimension (n_cfg,)
+        function:
+            Flag small rwfs if absolute value of particular rwf is smaller
+            than 5% of the absolute value of the average over all rwfs
+        output:
+            Corresponding indices of rwfs that are flagged
+
+    """
+    small_rwf_indices = np.argwhere(np.abs(rwfs)/np.mean(np.abs(rwfs)) < 0.05)
+    return small_rwf_indices
+
+def identify_exceptionals(obs_jkn: np.ndarray, sigma_threshold: int) -> np.ndarray:
+    """
+    Identify exceptional configurations using the MAD on jackknife resamples.
+
+    check for absolute(R - med(R)) / sigma] > 6
+    
+    obs_jkn: shape (n_cfg, ...) — reweighted jackknife resamples
+    sigma_threshold: number of normalised MADs to flag (default 5)
+    
+    returns: 1D boolean array of shape (n_cfg,), True = exceptional
+    """
+    N_res = obs_jkn.shape[0]
+
+    # median over configurations (axis=0)
+    median = np.median(obs_jkn, axis=0)  # shape: (...)
+    
+    # absolute deviations from median
+    abs_dev = np.absolute(obs_jkn - median)  # shape: (n_cfg, ...)
+    
+    # MAD: median of absolute deviations over configurations
+    mad = np.median(abs_dev, axis=0)  # shape: (...)
+    
+    # normalised MAD (Gaussian consistency factor)
+    sigma_mad = 1.4826 * mad * np.sqrt(N_res)
+    
+    # avoid division by zero where MAD is exactly 0
+    sigma_mad = np.where(sigma_mad == 0, np.inf, sigma_mad)
+    
+    # flag as exceptional if any element across (...) exceeds sigma_threshold
+    exceeds = abs_dev / sigma_mad > sigma_threshold  # shape: (n_cfg, ...)
+    # flatten all alpha into one axis: (n_cfg, ...) -> (n_cfg, n_kinematic)
+    exceeds_flat = exceeds.reshape(N_res, -1)
+    # flag configuration j if it exceeds threshold at ANY alpha
+    exceptional = np.any(exceeds_flat, axis=1)
+    
+    return exceptional

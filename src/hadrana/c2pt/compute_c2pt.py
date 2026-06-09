@@ -5,49 +5,11 @@ from hadrana.ensembles.helpers import EnsembleHelpers
 from hadrana.loader import load_rwfs
 from hadrana.statistics import generate_jackknife_resamples
 
-"""
-D251_c2pt_jkn.h5/
-    c2pt/
-        nsquare_0/
-            /fwd
-            /fwd_bwd_avg
-        nsquare_1/
-            /fwd
-            /fwd_bwd_avg
-        nsquare_2/
-            /fwd
-            /fwd_bwd_avg
-        nsquare_3/
-            /fwd
-            /fwd_bwd_avg
-        nsquare_4/
-            /fwd
-            /fwd_bwd_avg
-        nsquare_5/
-            /fwd
-            /fwd_bwd_avg
-        nsquare_6/
-            /fwd
-            /fwd_bwd_avg
-        nsquare_8/
-            /fwd
-            /fwd_bwd_avg
-
-    c2pt_ratio/
-        nsquare_1/
-        nsquare_2/
-        nsquare_3/
-        nsquare_4/
-        nsquare_5/
-        nsquare_6/
-        nsquare_8/
-"""
-
 def compute_c2pt_jkn_fwd(ensemble: str, nsquare: int, bin_size: int) -> np.ndarray:
     h = EnsembleHelpers(ensemble)
     exceptionals = h.get_exceptionals()
 
-    rwfs: np.ndarray = load_rwfs(ensemble) 
+    rwfs, rwfs_path = load_rwfs(ensemble) 
     rwfs = np.delete(rwfs, exceptionals, axis=0)
 
     c2pt_fwd: np.ndarray = load_c2pt_raw(ensemble, nsquare, "fwd")
@@ -63,7 +25,7 @@ def compute_c2pt_jkn_fwd_bwd_avg(ensemble: str, nsquare: int, bin_size: int) -> 
     h = EnsembleHelpers(ensemble)
     exceptionals: np.ndarray = h.get_exceptionals()
 
-    rwfs: np.ndarray = load_rwfs(ensemble) 
+    rwfs, rwfs_path = load_rwfs(ensemble) 
     rwfs = np.delete(rwfs, exceptionals, axis=0)
 
     c2pt_fwd: np.ndarray = load_c2pt_raw(ensemble, nsquare, "fwd")

@@ -36,7 +36,7 @@ from hadrana.runs.serialise import (
 def print_fit_summary(
     label: str,
     fit,
-    path: Path = None,
+    path: Path,
     resample_method: str = "jackknife",
     accepted: bool | None = None,
     chi2dof_max: float = 2.0,
@@ -163,7 +163,7 @@ if __name__ == "__main__":
     ensemble        = "D251"
     observable      = "c2pt"
     resample_type   = "jackknife"
-    bin_size        = 2
+    binsize        = 2
     momentum_shells = [0, 1, 2, 3, 4, 5, 6, 8]
     snr_threshold   = 10
     a_fm = 0.064
@@ -189,9 +189,9 @@ if __name__ == "__main__":
 
     for correlation_type in ["correlated", "uncorrelated"]:
         base_spec = {
-            "ensemble":                 "D251",
+            "ensemble":                 ensemble,
             "resample_type":            "jackknife",
-            "bin_size":                 bin_size,
+            "binsize":                  binsize,
             "execute_central_fit":      True,
             "starting_value_strategy": "data_driven",
             "tolerance":                1e-5,
