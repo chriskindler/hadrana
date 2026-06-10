@@ -1,4 +1,4 @@
-# hadrana/tests/test_fit_c2pt_v2.py
+# hadrana/tests/test_bin_analysis.py
 import argparse
 import gvar as gv
 import h5py
@@ -36,13 +36,31 @@ from hadrana.runs.serialise import (
 
 from hadrana.statistics import maximum_binsize
 
+"""
+    STRATEGY: D251
+    binsizes = [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20] 
+    maxbin   = 20
+
+    bin-run01
+    momentum_shells = [0] later: [0, 1, 2, 3, 4, 5, 6, 8] 
+
+    for n in momentum_shells:
+        for s in binsizes:
+            jkn = compute_jkn(n, s)
+            avg = np.mean(jkn)
+            err = np.std(jkn) * np.sqrt(ncfg - 1)
+
+            tmax = determine_tmax(avg, err, snr_threshold)
+
+"""
+
 def print_fit_summary(
     label: str,
     fit,
     path: Path,
     resample_method: str = "jackknife",
     accepted: bool | None = None,
-    chi2dof_max: float = 2.0,
+    chi2dof_max: float = 2.5,
 ):
     c       = fit.central
     nres    = len(fit.resample) if fit.resample else 0
@@ -179,38 +197,35 @@ if __name__ == "__main__":
         ddof   = 0 if resample_method == "jackknife" else 1
         return float(factor * np.std([r.params_est[key] for r in fit.resample], ddof=ddof))
 
-    ensemble        = "A654"
-    observable      = "c2pt"
-    resample_type   = "jackknife"
-    momentum_shells = [2, 3, 4, 5, 6, 8]
-    snr_threshold   = 10
-    a_fm            = 0.098
+    ensemble      = "A650"
+    observable    = "c2pt"
+    resample_type = "jackknife"
+
+    momentum_shells = [0]
     t_phys          = 0.3
     t_start         = 2
 
-    # binsize used to SELECT and LOCK the fit range (small => many bins =>
-    # well-conditioned correlated covariance => chi2/ndof <= 2.0 is meaningful)
-    selection_binsize = 2
+    snr_threshold = 0
+    a_fm = 0.0
+    binsizes = []
+    if ensemble == "D251":
+        binsizes      = [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+        snr_threshold = 10
+        a_fm          = 0.064
 
-    rwfs, rwfs_path = load_rwfs(ensemble)
-    ncfg = rwfs.shape[0]
+    elif ensemble == "A650":
+        binsizes      = [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 30, 40, 50]
+        snr_threshold = 5
+        a_fm          = 0.098
 
-    binsizes = [1, 2, 4, 8, 16, 32, 64, maximum_binsize(ncfg)]
-    # de-duplicate (maximum_binsize may collide with a literal) while preserving order
-    binsizes = sorted(set(binsizes))
-
-    print(f"BINSIZES = {binsizes}")
-    print(f"maximum binsize = {np.max(binsizes)}")
-    print(f"selection binsize = {selection_binsize}")
-
-    # one run dir for the whole study
     run = Run.initialise(
         base_path  = Path("/home/ck/phd/results"),
         ensemble   = ensemble,
         observable = observable,
-        label      = "binsize-run01",
+        label      = "nucleon-mass-run01",
     )
     run_dir     = run.create(exist_ok=True)
+
     hash_length = 6
 
     base_spec = {
@@ -223,180 +238,195 @@ if __name__ == "__main__":
         "ncall":                   10000,
     }
 
-    # ==============================================================
-    # SELECTION PHASE (run ONCE at selection_binsize)
-    #   correlated two-state sweep over t_zero, chi2/ndof <= 2.0 guard,
-    #   collapse to largest accepted t_min; lock (t_min, t_max) per shell.
-    # ==============================================================
-    print("\n" + "=" * 64)
-    print(f"SELECTION PHASE @ binsize={selection_binsize}")
-    print("=" * 64)
-
-    c2pt_sel = load_c2pt_per_nsquare(ensemble, momentum_shells, selection_binsize)
-
     # nsquare -> (t_min, t_max); shells with no accepted two-state are absent
-    locked_ranges: dict[int, tuple[int, int]] = {}
 
-    for nsquare in momentum_shells:
-        y     = c2pt_sel[nsquare]
-        y_cen = np.mean(y, axis=0)
-        y_err = compute_sdev(y, resample_type)
+    selection: dict[tuple[int, int], tuple[int, int]] = {}   # (nsquare, binsize) -> (t_min, t_max)
+    records:   list[dict] = []                                   # one row per (n, s, t_zero)
 
-        # MAXIMUM TIMESLICE (locked here at the selection binsize)
-        t_max = estimate_maximum_timeslice(
-            c2pt_jkn_avg              = y_cen,
-            c2pt_jkn_err              = y_err,
-            signal_to_noise_threshold = snr_threshold,
-        )
+    for n in momentum_shells:
+        for s in binsizes:
+            c2pt_per_nsquare = load_c2pt_per_nsquare(ensemble, momentum_shells, s)
 
-        print(f"tmax = {t_max}")
+            jkn = c2pt_per_nsquare[n]
+            avg = np.mean(jkn, axis=0)
+            err = compute_sdev(jkn, resample_type)
 
-        initial_timeslices = estimate_initial_timeslices(
-            a_fm    = a_fm,
-            t_phys = t_phys,
-            t_max  = t_max,
-        )
+            # MAXIMUM TIMESLICE (locked here at the selection binsize)
+            t_max = estimate_maximum_timeslice(
+                c2pt_jkn_avg              = avg,
+                c2pt_jkn_err              = err,
+                signal_to_noise_threshold = snr_threshold,
+            )
 
-        candidate_tmins = []
+            print(f"tmax = {t_max}")
 
-        for t_zero in initial_timeslices:
-            print(f"\n=== [select] nsquare={nsquare}, t_zero={t_zero}, t_max={t_max} ===")
+            initial_timeslices = estimate_initial_timeslices(
+                a_fm   = a_fm,
+                t_phys = t_phys,
+                t_max  = t_max,
+            )
 
-            # need at least (nparams + 1) points for a meaningful two-state ndof
-            if (t_max - t_zero + 1) <= 4:
-                print(f"window [{t_zero},{t_max}] too short for two-state (<=4 pts), skip")
+            candidates = []
+
+            for t_zero in initial_timeslices:
+                print(f"\n [select] nsquare={n}, t_zero={t_zero}, t_max={t_max}")
+
+                params_start = estimate_c2pt_starting_values(
+                    c2pt_jkn = jkn,
+                    t_start  = t_zero,
+                    t_final  = t_max,
+                )
+                params_limit = {
+                    "A0":  (0, None),
+                    "E0":  (0, None),
+                    "A1":  (0, None),
+                    "dE1": (0, None),
+                }
+
+                fit_spec = {
+                    **base_spec,
+                    "binsize":              s,
+                    "correlation_type":     "correlated",
+                    "nsquare":              n,
+                    "execute_resample_fit": False,
+                    "model_id":             "two-state-exp",
+                    "t_start":              t_zero,
+                    "t_final":              t_max,
+                    "params_start":         params_start,
+                    "params_limit":         params_limit,
+                }
+
+                two_state_fit = run_c2pt_fits(
+                    t_start              = fit_spec["t_start"],
+                    t_final              = fit_spec["t_final"],
+                    y                    = jkn,
+                    correlation_type     = fit_spec["correlation_type"],
+                    resample_type        = fit_spec["resample_type"],
+                    execute_central_fit  = fit_spec["execute_central_fit"],
+                    execute_resample_fit = fit_spec["execute_resample_fit"],
+                    model_id             = fit_spec["model_id"],
+                    params_start         = fit_spec["params_start"],
+                    params_limit         = fit_spec["params_limit"],
+                    tolerance            = fit_spec["tolerance"],
+                    strategy             = fit_spec["strategy"],
+                    ncall                = fit_spec["ncall"],
+                )
+
+                fit_hash = make_fit_hash(fit_spec, hash_length)
+                fit_id   = make_c2pt_fit_id(fit_spec, hash_length)
+                result = fit_results(
+                    run_id          = run.run_id,
+                    fit_id          = fit_id,
+                    fit_hash        = fit_hash,
+                    fit_spec        = fit_spec,
+                    central         = two_state_fit.central,
+                    resample        = two_state_fit.resample,
+                    resample_method = fit_spec["resample_type"],
+                )
+                path_two = save_fit(result, run_dir, fit_id)
+                acc = accept_two_state(two_state_fit)
+                print_fit_summary("two-state", two_state_fit, path=path_two, accepted=acc)
+
+                c       = two_state_fit.central
+                chi2dof = (c.chi2 / c.ndof) if c.ndof > 0 else float("inf")
+                rec = {
+                    "nsquare": n, "binsize": s, "t_zero": int(t_zero), "t_max": int(t_max),
+                    "accepted": bool(acc), "chi2": float(c.chi2), "ndof": int(c.ndof),
+                    "chi2dof": float(chi2dof), "pvalue": float(c.pvalue),
+                    "t_min_candidate": None, "fit_id": fit_id,
+                }
+
+                if not acc:
+                    print("two-state NOT accepted (chi2/ndof or ndof<=0), skip")
+                    records.append(rec)
+                    continue
+
+                t_min_cand = estimate_c2pt_minimum_timeslice(
+                    c2pt_jkn_err      = err,
+                    initial_timeslice = t_zero,
+                    maximum_timeslice = t_max,
+                    A1_est            = two_state_fit.central.params_est["A1"],
+                    E0_est            = two_state_fit.central.params_est["E0"],
+                    dE1_est           = two_state_fit.central.params_est["dE1"],
+                )
+                print(f"candidate t_min (t_zero={t_zero}): {t_min_cand}")
+                rec["t_min_candidate"] = None if t_min_cand is None else int(t_min_cand)
+                records.append(rec)
+                if t_min_cand is not None:
+                    candidates.append(t_min_cand)
+
+            if not candidates:
+                print(f"nsquare={n}, binsize={s}: no accepted two-state fit, NOT locking range")
                 continue
 
-            params_start = estimate_c2pt_starting_values(
-                c2pt_jkn = y,
-                t_start  = t_zero,
-                t_final  = t_max,
-            )
-            params_limit = {
-                "A0":  (0, None),
-                "E0":  (0, None),
-                "A1":  (0, None),
-                "dE1": (0, None),
-            }
+            t_min = max(candidates)
+            selection[(n, s)] = (int(t_min), int(t_max))
+            print(f"nsquare={n} binsize={s}: LOCKED [{t_min}, {t_max}] from {sorted(candidates)}")
 
-            fit_spec = {
-                **base_spec,
-                "binsize":              selection_binsize,
-                "correlation_type":     "correlated",
-                "nsquare":              nsquare,
-                "execute_resample_fit": True,
-                "model_id":             "two-state-exp",
-                "t_start":              t_zero,
-                "t_final":              t_max,
-                "params_start":         params_start,
-                "params_limit":         params_limit,
-            }
+    def summarise_selection(records, selection):
+        by_bin: dict[tuple[int, int], list[dict]] = {}
+        for r in records:
+            by_bin.setdefault((r["nsquare"], r["binsize"]), []).append(r)
 
-            two_state_fit = run_c2pt_fits(
-                t_start              = fit_spec["t_start"],
-                t_final              = fit_spec["t_final"],
-                y                    = y,
-                correlation_type     = fit_spec["correlation_type"],
-                resample_type        = fit_spec["resample_type"],
-                execute_central_fit  = fit_spec["execute_central_fit"],
-                execute_resample_fit = fit_spec["execute_resample_fit"],
-                model_id             = fit_spec["model_id"],
-                params_start         = fit_spec["params_start"],
-                params_limit         = fit_spec["params_limit"],
-                tolerance            = fit_spec["tolerance"],
-                strategy             = fit_spec["strategy"],
-                ncall                = fit_spec["ncall"],
-            )
+        print("\n" + "=" * 78)
+        print("SELECTION SUMMARY")
+        print("=" * 78)
+        for (n, s) in sorted(by_bin):
+            recs  = sorted(by_bin[(n, s)], key=lambda r: r["t_zero"])
+            t_max = recs[0]["t_max"]
+            lock  = selection.get((n, s))
+            lock_s = f"[{lock[0]}, {lock[1]}]" if lock else "NOT LOCKED"
+            print(f"\n nsquare={n}  binsize={s:>2}  t_max={t_max}  ->  locked {lock_s}")
+            print(f"   {'t_zero':>6} {'acc':>4} {'chi2/ndof':>10} {'chi2':>9} {'ndof':>5} {'p':>6} {'t_min*':>7}")
+            for r in recs:
+                flag  = "Y" if r["accepted"] else "n"
+                tmc   = r["t_min_candidate"]
+                tmc_s = "-" if tmc is None else str(tmc)
+                print(f"   {r['t_zero']:>6} {flag:>4} {r['chi2dof']:>10.3f} "
+                      f"{r['chi2']:>9.2f} {r['ndof']:>5} {r['pvalue']:>6.3f} {tmc_s:>7}")
 
-            fit_hash = make_fit_hash(fit_spec, hash_length)
-            fit_id   = make_c2pt_fit_id(fit_spec, hash_length)
-            result = fit_results(
-                run_id          = run.run_id,
-                fit_id          = fit_id,
-                fit_hash        = fit_hash,
-                fit_spec        = fit_spec,
-                central         = two_state_fit.central,
-                resample        = two_state_fit.resample,
-                resample_method = fit_spec["resample_type"],
-            )
-            path_two = save_fit(result, run_dir, fit_id)
-            acc = accept_two_state(two_state_fit)
-            print_fit_summary("two-state", two_state_fit, path=path_two, accepted=acc)
-            if not acc:
-                print("two-state NOT accepted (chi2/ndof or ndof<=0), skip")
+    summarise_selection(records, selection)
+
+    def best_accepted_record(records, n, s, key="chi2dof"):
+        """Accepted two-state record with smallest chi2/ndof for this (n, s); None if none."""
+        acc = [r for r in records
+               if r["nsquare"] == n and r["binsize"] == s and r["accepted"]
+               and r["t_min_candidate"] is not None]
+        return min(acc, key=lambda r: r[key]) if acc else None
+
+    # ---- ONE-STATE GROUND-STATE EXTRACTION (uncorrelated) ----
+    mass_records = []   # one row per (n, s)
+
+    FIXED_WINDOW = (18, 39)
+
+    FIXED_WINDOW_BY_ENSEMBLE = {"D251": (18, 39), "A650": (10, 21)}
+    FIXED_WINDOW = FIXED_WINDOW_BY_ENSEMBLE[ensemble]
+
+    for n in momentum_shells:
+        for s in binsizes:
+            rec = best_accepted_record(records, n, s)
+            if rec is None:
+                print(f"nsquare={n} binsize={s}: no accepted two-state, skip one-state")
                 continue
 
-            t_min = estimate_c2pt_minimum_timeslice(
-                c2pt_jkn_err      = y_err,
-                initial_timeslice = t_zero,
-                maximum_timeslice = t_max,
-                A1_est            = two_state_fit.central.params_est["A1"],
-                E0_est            = two_state_fit.central.params_est["E0"],
-                dE1_est           = two_state_fit.central.params_est["dE1"],
+            # t_min, t_max = rec["t_min_candidate"], rec["t_max"]
+            t_min, t_max = FIXED_WINDOW 
+
+            c2pt_per_nsquare = load_c2pt_per_nsquare(ensemble, momentum_shells, s)
+            jkn = c2pt_per_nsquare[n]
+
+            params_start = exclude_keys(
+                estimate_c2pt_starting_values(c2pt_jkn=jkn, t_start=t_min, t_final=t_max),
+                ["A1", "dE1"],
             )
-            print(f"candidate t_min (t_zero={t_zero}): {t_min}")
-            if t_min is not None:
-                candidate_tmins.append(t_min)
-
-        if not candidate_tmins:
-            print(f"nsquare={nsquare}: no accepted two-state fit, NOT locking range")
-            continue
-
-        t_min = max(candidate_tmins)
-        locked_ranges[nsquare] = (int(t_min), int(t_max))
-        print(f"nsquare={nsquare}: LOCKED range [{t_min}, {t_max}] "
-              f"from candidates {sorted(candidate_tmins)}")
-
-    print("\n" + "=" * 64)
-    print("LOCKED RANGES")
-    for ns in momentum_shells:
-        if ns in locked_ranges:
-            print(f"  nsquare={ns}: {locked_ranges[ns]}")
-        else:
-            print(f"  nsquare={ns}: (none - excluded from sweep)")
-    print("=" * 64)
-
-    # ==============================================================
-    # BINSIZE SWEEP (uncorrelated one-state over the LOCKED ranges)
-    #   jackknife sigma(E0) is invariant to correlated/uncorrelated;
-    #   uncorrelated avoids the singular-covariance blowup at large binsize.
-    # ==============================================================
-    # nsquare -> list of (binsize, E0, sigmaE0) for the saturation curve
-    saturation: dict[int, list[tuple[int, float, float]]] = {
-        ns: [] for ns in locked_ranges
-    }
-
-    for s in binsizes:
-        print("\n" + "#" * 64)
-        print(f"BINSIZE SWEEP @ binsize={s}")
-        print("#" * 64)
-
-        c2pt_per_nsquare = load_c2pt_per_nsquare(ensemble, momentum_shells, s)
-
-        for nsquare in momentum_shells:
-            if nsquare not in locked_ranges:
-                continue
-
-            t_min, t_max = locked_ranges[nsquare]
-            y = c2pt_per_nsquare[nsquare]
-
-            params_start = estimate_c2pt_starting_values(
-                c2pt_jkn = y,
-                t_start  = t_min,
-                t_final  = t_max,
-            )
-            params_start = exclude_keys(params_start, {"A1", "dE1"})
-            params_limit = {
-                "A0": (0, None),
-                "E0": (0, None),
-            }
+            params_limit = {"A0": (0, None), "E0": (0, None)}
 
             fit_spec = {
                 **base_spec,
                 "binsize":              s,
                 "correlation_type":     "uncorrelated",
-                "nsquare":              nsquare,
-                "execute_resample_fit": True,
+                "nsquare":              n,
+                "execute_resample_fit": True,        # needed for jackknife error on E0
                 "model_id":             "one-state-exp",
                 "t_start":              t_min,
                 "t_final":              t_max,
@@ -407,7 +437,7 @@ if __name__ == "__main__":
             one_state_fit = run_c2pt_fits(
                 t_start              = fit_spec["t_start"],
                 t_final              = fit_spec["t_final"],
-                y                    = y,
+                y                    = jkn,
                 correlation_type     = fit_spec["correlation_type"],
                 resample_type        = fit_spec["resample_type"],
                 execute_central_fit  = fit_spec["execute_central_fit"],
@@ -422,7 +452,7 @@ if __name__ == "__main__":
 
             fit_hash = make_fit_hash(fit_spec, hash_length)
             fit_id   = make_c2pt_fit_id(fit_spec, hash_length)
-            result = fit_results(
+            result   = fit_results(
                 run_id          = run.run_id,
                 fit_id          = fit_id,
                 fit_hash        = fit_hash,
@@ -432,26 +462,39 @@ if __name__ == "__main__":
                 resample_method = fit_spec["resample_type"],
             )
             path_one = save_fit(result, run_dir, fit_id)
+            print_fit_summary("one-state", one_state_fit, path=path_one)
 
-            E0      = float(one_state_fit.central.params_est["E0"])
-            sigmaE0 = jackknife_err(one_state_fit, "E0", resample_type)
-            saturation[nsquare].append((s, E0, sigmaE0))
+            c      = one_state_fit.central
+            E0     = float(c.params_est["E0"])
+            E0_err = jackknife_err(one_state_fit, "E0")
+            mass_records.append({
+                "nsquare": n, "binsize": s, "t_min": t_min, "t_max": t_max,
+                "E0": E0, "E0_err": E0_err,
+                "chi2": float(c.chi2), "ndof": int(c.ndof),
+                "chi2dof": float(c.chi2 / c.ndof) if c.ndof > 0 else float("inf"),
+                "pvalue": float(c.pvalue),
+                "src_t_zero": rec["t_zero"], "src_chi2dof": rec["chi2dof"],
+            })
 
-            print(f"\nbinsize={s}  nsquare={nsquare}")
-            print(f"FIT RANGE ONE-STATE = [{t_min}, {t_max}]")
-            print_fit_summary("one-state", one_state_fit, path_one)
+    # ---- BINSIZE DEPENDENCE OF THE NUCLEON MASS ----
+    print("\n" + "=" * 84)
+    print("NUCLEON MASS vs BINSIZE  (one-state, uncorrelated)")
+    print("=" * 84)
+    print(f" {'bin':>3} {'window':>9} {'E0':>12} {'E0_err':>10} {'chi2/ndof':>10} {'p':>6}  {'src t0':>6}  gvar")
+    for r in sorted(mass_records, key=lambda r: (r["nsquare"], r["binsize"])):
+        win = f"[{r['t_min']},{r['t_max']}]"
+        print(f" {r['binsize']:>3} {win:>9} {r['E0']:12.6e} {r['E0_err']:10.3e} "
+              f"{r['chi2dof']:10.3f} {r['pvalue']:6.3f}  {r['src_t_zero']:>6}  {gv.gvar(r['E0'], r['E0_err'])}")
 
-    # ==============================================================
-    # SATURATION SUMMARY: sigma(E0) vs binsize, per momentum shell
-    # ==============================================================
-    print("\n" + "=" * 64)
-    print("SATURATION CURVE: sigma(E0) vs binsize")
-    print("=" * 64)
-    for nsquare in momentum_shells:
-        if nsquare not in saturation:
-            continue
-        t_min, t_max = locked_ranges[nsquare]
-        print(f"\nnsquare={nsquare}  range=[{t_min},{t_max}]")
-        print(f"  {'binsize':>8s}  {'E0':>14s}  {'sigma(E0)':>14s}")
-        for s, E0, sE0 in saturation[nsquare]:
-            print(f"  {s:8d}  {E0:14.6e}  {sE0:14.6e}")
+    # mass_report = {
+    #     "ensemble":        ensemble,
+    #     "momentum_shells": momentum_shells,
+    #     "binsizes":        binsizes,
+    #     "selection_rule":  "lowest chi2/ndof accepted two-state per binsize",
+    #     "fit":             {"model": "one-state-exp", "correlation": "uncorrelated"},
+    #     "mass_records":    mass_records,
+    # }
+    # mass_path = run_dir / "nucleon_mass_vs_binsize.json"
+    # with open(mass_path, "w") as f:
+    #     json.dump(mass_report, f, indent=2)
+    # print(f"\nwrote {mass_path}")

@@ -17,7 +17,7 @@ def estimate_initial_timeslices(
     t0_max = min(t0_max, t_max - min_window + 1)
 
     if t0_max < t_start:
-        return []                  # no admissible window: shell fails loudly
+        return []
     return list(range(t_start, t0_max + 1))
 
 def estimate_maximum_timeslice(c2pt_jkn_avg, c2pt_jkn_err,

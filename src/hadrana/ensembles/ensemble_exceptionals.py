@@ -1,6 +1,7 @@
 _EXCEPTIONAL_CONFIGURATION_NUMBERS = {
     # A
-    "A654": {"rwfs": [], "cfgs": []},
+    "A650": None,
+    "A654": None,
     # B
     # C
     # D

@@ -1,5 +1,7 @@
 import h5py
 import numpy as np
+import time
+
 
 from hadrana.c2pt.compute_c2pt import compute_c2pt_jkn_fwd, compute_c2pt_jkn_fwd_bwd_avg, compute_c2pt_ratio_jkn
 from hadrana.statistics import maximum_binsize
@@ -18,13 +20,12 @@ def export_c2pt_jkn(ensemble: str, nsquares: list[int], bin_size: int):
         print("Generate c2pt jackknife per nsquare")
         for nsquare in nsquares:
             print(f"nsquare = {nsquare}")
-            print(f"c2pt fwd")
-
             c2pt_fwd_jkn = compute_c2pt_jkn_fwd(ensemble, nsquare, bin_size)
+            print("Create c2pt_fwd dataset")
             f.create_dataset(f"c2pt/nsquare{nsquare:02d}/fwd", data = c2pt_fwd_jkn)
 
-            print(f"c2pt fwd bwd avg")
             c2pt_fwd_bwd_avg_jkn = compute_c2pt_jkn_fwd_bwd_avg(ensemble, nsquare, bin_size)
+            print("Create c2pt_fwd_bwd_avg dataset")
             f.create_dataset(f"c2pt/nsquare{nsquare:02d}/fwd_bwd_avg", data = c2pt_fwd_bwd_avg_jkn)
 
             print(f"c2pt ratio")
@@ -35,20 +36,39 @@ def export_c2pt_jkn(ensemble: str, nsquares: list[int], bin_size: int):
             print()
 
 if __name__ == "__main__":
-    ensemble = "A654"
-    momentum_shells = [0, 1, 2, 3, 4, 5, 6, 8]
+    ensemble = "A650"
+    """
+    smax(A650) = 50
+    ncfg = 5062
+    binsizes = [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 30, 40, 50]
+
+    smax(D251) = 20
+    ncfg = 2012
+
+    """
+    momentum_shells = [0]
 
     from hadrana.loader import load_rwfs
 
     rwfs, rwfs_path = load_rwfs(ensemble)
     ncfg = rwfs.shape[0]
 
-    binsizes = [1, 2, 4, 8, 16, 32, 64, maximum_binsize(ncfg)]
+    binsizes = [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 30, 40, maximum_binsize(ncfg)]
 
-    print(f"ENSEMBLE: {ensemble}")
+    print(f"ENSEMBLE: {ensemble}, CONFIGS = {ncfg}")
     print(f"BINSIZES = {binsizes}")
     print(f"MAXIMUM BINSIZE = {np.max(binsizes)}")
-    
+
+    timings = {}
     for s in binsizes:
         print(f"binsize = {s}")
-        export_c2pt_jkn(ensemble, momentum_shells, s)    
+        t0 = time.perf_counter()
+        export_c2pt_jkn(ensemble, momentum_shells, s)
+        dt = time.perf_counter() - t0
+        timings[s] = dt
+        print(f"binsize {s} took {dt:.2f}s")    
+
+    print("\n TIMING SUMMARY ")
+    for s, dt in timings.items():
+        print(f"  binsize {s:>3}: {dt:7.2f}s")
+    print(f"  total:     {sum(timings.values()):7.2f}s")

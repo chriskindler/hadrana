@@ -52,7 +52,7 @@ def get_momentum_shell(nsquare: int) -> list[tuple]:
         raise ValueError(f"No data available for n2 = {nsquare}.")
 
     momentum_list = get_momentum_list()
-    shell_dict      = selected_momenta_indices_dict()    # ← FIXED: was nsquare, now 8
+    shell_dict      = selected_momenta_indices_dict()
     shell_list      = []
     shell_indices   = []
 

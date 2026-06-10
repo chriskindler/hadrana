@@ -25,7 +25,8 @@ def compute_c2pt_jkn_fwd_bwd_avg(ensemble: str, nsquare: int, bin_size: int) -> 
     h = EnsembleHelpers(ensemble)
     exceptionals: np.ndarray = h.get_exceptionals()
 
-    rwfs, rwfs_path = load_rwfs(ensemble) 
+    # load_rwfs usually also returns the path to the rwf file
+    rwfs, _ = load_rwfs(ensemble) 
     rwfs = np.delete(rwfs, exceptionals, axis=0)
 
     c2pt_fwd: np.ndarray = load_c2pt_raw(ensemble, nsquare, "fwd")
