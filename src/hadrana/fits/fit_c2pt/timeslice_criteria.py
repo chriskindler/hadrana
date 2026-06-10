@@ -1,24 +1,40 @@
 import numpy as np 
 
-def estimate_initial_timeslices(a_fm, t_start, t_phys):
-    t0_max = int(t_phys / a_fm)
+def estimate_initial_timeslices(
+    a_fm:         float,
+    t_phys:       float,
+    t_max:        int,
+    t_start_phys: float = 0.13,   # physical earliest start [fm], ~lattice-2 on D251
+    min_window:   int   = 6,      # two-state npar(4) + 2, so chigrad AICc is defined
+) -> list[int]:
+    """t_zero candidates in [t_start, t0_max], all leaving >= min_window
+    points below t_max. Everything physical is fixed in fm; lattice indices
+    are derived per ensemble via a_fm."""
+    t_start = max(round(t_start_phys / a_fm), 1)
+    t0_max  = round(t_phys / a_fm)
+
+    # never start so late that [t_zero, t_max] is shorter than min_window
+    t0_max = min(t0_max, t_max - min_window + 1)
+
+    if t0_max < t_start:
+        return []                  # no admissible window: shell fails loudly
     return list(range(t_start, t0_max + 1))
 
-def estimate_maximum_timeslice(
-    c2pt_jkn_avg: np.ndarray,
-    c2pt_jkn_err: np.ndarray,
-    signal_to_noise_threshold: int
-) -> int:
-    """
-        Determined upper bound of fit range
-        t_max in [t_0, t_cut] with SN <= signal_to_noise_threshold
-    """
-    nt = len(c2pt_jkn_avg)
-    t_cut = nt // 2
-    snr = c2pt_jkn_avg / c2pt_jkn_err
-    below = np.where(snr[:t_cut] <= signal_to_noise_threshold)[0]
-    tmax = int(below[0] - 1) if below.size else t_cut - 1 
-    return tmax
+def estimate_maximum_timeslice(c2pt_jkn_avg, c2pt_jkn_err,
+                               signal_to_noise_threshold,
+                               boundary_margin=2):
+    nt    = len(c2pt_jkn_avg)
+    t_cut = nt // 2 - boundary_margin          # stay clear of the turn-up
+    snr   = c2pt_jkn_avg / c2pt_jkn_err
+
+    # first t where SNR drops below threshold AND stays below (sustained)
+    below = snr[:t_cut] <= signal_to_noise_threshold
+    tmax  = t_cut - 1
+    for t in range(t_cut):
+        if below[t] and below[t:].all():
+            tmax = t - 1
+            break
+    return max(tmax, 0)
 
 def estimate_c2pt_minimum_timeslice(
     c2pt_jkn_err:      np.ndarray,

@@ -1,7 +1,8 @@
 import numpy as np
 
 def maximum_binsize(ncfg: int):
-    return ncfg // 20
+    # magic number: 100 = number of bins
+    return ncfg // 100
 
 def generate_binsize_interval(maximum_binsize: int) -> list[int]:
     FINE_MAX   = 20    # dense integer block: where the rise of R(S) lives

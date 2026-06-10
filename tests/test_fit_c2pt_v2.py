@@ -24,7 +24,7 @@ from hadrana.fits.fit_c2pt.timeslice_criteria import (
     estimate_maximum_timeslice,
 )
 
-from hadrana.loader import load_c2pt_per_nsquare
+from hadrana.loader import load_c2pt_per_nsquare, load_rwfs
 from hadrana.runs.serialise import (
     Run,
     fit_results,
@@ -32,6 +32,8 @@ from hadrana.runs.serialise import (
     make_c2pt_fit_id,
     save_fit
 ) 
+
+from hadrana.statistics import maximum_binsize
 
 def print_fit_summary(
     label: str,
@@ -145,13 +147,6 @@ def run_c2pt_fits(
     )
 
 if __name__ == "__main__":
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument("-f", "--filepath", help="json file path")
-    # args = parser.parse_args()
-
-    # with open(args.filepath, "r") as f:
-    #     cfg: dict = json.load(f)
-
     # TODO: Find a way to make start params dict more flexible
     def exclude_keys(d, keys):
         return {x: d[x] for x in d if x not in keys}
@@ -160,99 +155,191 @@ if __name__ == "__main__":
         c = fit.central
         return c.judge_fit and (c.chi2 / c.ndof) <= chi2dof_max
 
-    ensemble        = "D251"
+    ensemble        = "A654"
     observable      = "c2pt"
     resample_type   = "jackknife"
     binsize        = 2
     momentum_shells = [0, 1, 2, 3, 4, 5, 6, 8]
     snr_threshold   = 10
-    a_fm = 0.064
+    a_fm = 0.098
     t_phys = 0.3
     t_start = 2
 
-    """
-        Construct dynamic array depending on lattice spacing of ensmeble data
-        t_zero_max = t_phys // a 
-    """
+    rwfs, rwfs_path = load_rwfs(ensemble)
+    ncfg = rwfs.shape[0]
 
-    c2pt_per_nsquare = load_c2pt_per_nsquare(ensemble, momentum_shells, bin_size)
+    binsizes = [1, 2, 4, 8, 16, 32, 64, maximum_binsize(ncfg)]
 
-    run = Run.initialise(
-        base_path  = Path("/home/ck/phd/results"),
-        ensemble   = ensemble,
-        observable = observable,
-        label      = "test-run26",
-    )
+    print(f"BINSIZES = {binsizes}")
+    print(f"maximum binsize = {np.max(binsizes)}")
 
-    run_dir = run.create(exist_ok=True)
-    hash_length = 6
+    for s in binsizes:
+        c2pt_per_nsquare = load_c2pt_per_nsquare(ensemble, momentum_shells, s)
 
-    for correlation_type in ["correlated", "uncorrelated"]:
-        base_spec = {
-            "ensemble":                 ensemble,
-            "resample_type":            "jackknife",
-            "binsize":                  binsize,
-            "execute_central_fit":      True,
-            "starting_value_strategy": "data_driven",
-            "tolerance":                1e-5,
-            "strategy":                 2,
-            "ncall":                    10000,
-        }
+        run = Run.initialise(
+            base_path  = Path("/home/ck/phd/results"),
+            ensemble   = ensemble,
+            observable = observable,
+            label      = "binsize-run01",
+        )
 
-        for nsquare in momentum_shells:
-            y     = c2pt_per_nsquare[nsquare]
-            nres  = y.shape[0]
+        run_dir = run.create(exist_ok=True)
+        hash_length = 6
 
-            y_cen = np.mean(y, axis=0)
-            y_err = compute_sdev(y, resample_type) 
+        for correlation_type in ["correlated", "uncorrelated"]:
+            base_spec = {
+                "ensemble":                 ensemble,
+                "resample_type":            "jackknife",
+                "binsize":                  s,
+                "execute_central_fit":      True,
+                "starting_value_strategy": "data_driven",
+                "tolerance":                1e-5,
+                "strategy":                 2,
+                "ncall":                    10000,
+            }
 
-            # MAXIMUM TIMESLICE
-            t_max = estimate_maximum_timeslice(
-                c2pt_jkn_avg              = y_cen,
-                c2pt_jkn_err              = y_err,
-                signal_to_noise_threshold = snr_threshold,
-            )
+            for nsquare in momentum_shells:
+                y     = c2pt_per_nsquare[nsquare]
+                nres  = y.shape[0]
 
-            initial_timeslices = estimate_initial_timeslices(
-                a_fm   = 0.064,
-                t_start = 2,
-                t_phys = 0.35,
-            )
+                y_cen = np.mean(y, axis=0)
+                y_err = compute_sdev(y, resample_type) 
 
-            # ----------------------------------------------------------
-            # PHASE 1: sweep t_zero, collect candidate t_min values
-            # ----------------------------------------------------------
-            candidate_tmins = []
+                # MAXIMUM TIMESLICE
+                t_max = estimate_maximum_timeslice(
+                    c2pt_jkn_avg              = y_cen,
+                    c2pt_jkn_err              = y_err,
+                    signal_to_noise_threshold = snr_threshold,
+                )
 
-            for t_zero in initial_timeslices:
-                print(f"\n=== nsquare={nsquare}, t_zero={t_zero}, t_max={t_max} ===")
+                initial_timeslices = estimate_initial_timeslices(
+                    a_fm   = a_fm,
+                    t_start = t_start,
+                    t_phys = t_phys,
+                )
 
+                # ----------------------------------------------------------
+                # PHASE 1: sweep t_zero, collect candidate t_min values
+                # ----------------------------------------------------------
+                candidate_tmins = []
+
+                for t_zero in initial_timeslices:
+                    print(f"\n=== nsquare={nsquare}, t_zero={t_zero}, t_max={t_max} ===")
+
+                    params_start = estimate_c2pt_starting_values(
+                        c2pt_jkn = y,
+                        t_start  = t_zero,
+                        t_final  = t_max,
+                    )
+                    params_limit = {
+                        "A0":  (0, None),
+                        "E0":  (0, None),
+                        "A1":  (0, None),
+                        "dE1": (0, None),
+                    }
+
+                    fit_spec = {
+                        **base_spec,
+                        "correlation_type":     "correlated",
+                        "nsquare":              nsquare,
+                        "execute_resample_fit": True,
+                        "model_id":             "two-state-exp",
+                        "t_start":              t_zero,
+                        "t_final":              t_max,
+                        "params_start":         params_start,
+                        "params_limit":         params_limit,
+                    }
+
+                    two_state_fit = run_c2pt_fits(
+                        t_start              = fit_spec["t_start"],
+                        t_final              = fit_spec["t_final"],
+                        y                    = y,
+                        correlation_type     = fit_spec["correlation_type"],
+                        resample_type        = fit_spec["resample_type"],
+                        execute_central_fit  = fit_spec["execute_central_fit"],
+                        execute_resample_fit = fit_spec["execute_resample_fit"],
+                        model_id             = fit_spec["model_id"],
+                        params_start         = fit_spec["params_start"],
+                        params_limit         = fit_spec["params_limit"],
+                        tolerance            = fit_spec["tolerance"],
+                        strategy             = fit_spec["strategy"],
+                        ncall                = fit_spec["ncall"],
+                    )
+
+                    fit_hash = make_fit_hash(fit_spec, hash_length)
+                    fit_id   = make_c2pt_fit_id(fit_spec, hash_length)
+                    result = fit_results(
+                        run_id          = run.run_id,
+                        fit_id          = fit_id,
+                        fit_hash        = fit_hash,
+                        fit_spec        = fit_spec,
+                        central         = two_state_fit.central,
+                        resample        = two_state_fit.resample,
+                        resample_method = fit_spec["resample_type"],
+                    )
+                    path_two = save_fit(result, run_dir, fit_id)
+                    acc = accept_two_state(two_state_fit)
+                    print_fit_summary(
+                        "two-state",
+                        two_state_fit, 
+                        path=path_two,
+                        accepted=acc
+                   )
+                    if not acc:
+                        print("two-state NOT accepted (chi2/ndof), skip")
+                        continue
+
+                    t_min = estimate_c2pt_minimum_timeslice(
+                        c2pt_jkn_err      = y_err,
+                        initial_timeslice = t_zero,
+                        maximum_timeslice = t_max,
+                        A1_est            = two_state_fit.central.params_est["A1"],
+                        E0_est            = two_state_fit.central.params_est["E0"],
+                        dE1_est           = two_state_fit.central.params_est["dE1"],
+                    )
+                    print(f"candidate t_min (t_zero={t_zero}): {t_min}")
+                    if t_min is not None:
+                        candidate_tmins.append(t_min)
+
+                # ----------------------------------------------------------
+                # COLLAPSE: largest t_min over all accepted two-state fits
+                # ----------------------------------------------------------
+                if not candidate_tmins:
+                    print(f"nsquare={nsquare}: no accepted two-state fit, skip one-state")
+                    continue
+
+                t_min = max(candidate_tmins)
+                print(f"nsquare={nsquare}: collapsed t_min = {t_min} "
+                    f"from candidates {sorted(candidate_tmins)}")
+
+                # ----------------------------------------------------------
+                # PHASE 2: single uncorrelated one-state production fit
+                # ----------------------------------------------------------
                 params_start = estimate_c2pt_starting_values(
                     c2pt_jkn = y,
-                    t_start  = t_zero,
+                    t_start  = t_min,
                     t_final  = t_max,
                 )
+                params_start = exclude_keys(params_start, {"A1", "dE1"})
                 params_limit = {
-                    "A0":  (0, None),
-                    "E0":  (0, None),
-                    "A1":  (0, None),
-                    "dE1": (0, None),
+                    "A0": (0, None),
+                    "E0": (0, None),
                 }
 
                 fit_spec = {
                     **base_spec,
-                    "correlation_type":     "correlated",
+                    "correlation_type":     correlation_type,
                     "nsquare":              nsquare,
                     "execute_resample_fit": True,
-                    "model_id":             "two-state-exp",
-                    "t_start":              t_zero,
+                    "model_id":             "one-state-exp",
+                    "t_start":              t_min,
                     "t_final":              t_max,
-                    "bin_size":             bin_size,
+                    "bin_size":             s,
                     "params_start":         params_start,
                     "params_limit":         params_limit,
                 }
 
-                two_state_fit = run_c2pt_fits(
+                one_state_fit = run_c2pt_fits(
                     t_start              = fit_spec["t_start"],
                     t_final              = fit_spec["t_final"],
                     y                    = y,
@@ -275,95 +362,11 @@ if __name__ == "__main__":
                     fit_id          = fit_id,
                     fit_hash        = fit_hash,
                     fit_spec        = fit_spec,
-                    central         = two_state_fit.central,
-                    resample        = two_state_fit.resample,
+                    central         = one_state_fit.central,
+                    resample        = one_state_fit.resample,
                     resample_method = fit_spec["resample_type"],
                 )
-                save_fit(result, run_dir, fit_id)
-                acc = accept_two_state(two_state_fit)
-                print_fit_summary("two-state", two_state_fit, accepted=acc)
-                if not acc:
-                    print("two-state NOT accepted (chi2/ndof), skip")
-                    continue
-
-                t_min = estimate_c2pt_minimum_timeslice(
-                    c2pt_jkn_err      = y_err,
-                    initial_timeslice = t_zero,
-                    maximum_timeslice = t_max,
-                    A1_est            = two_state_fit.central.params_est["A1"],
-                    E0_est            = two_state_fit.central.params_est["E0"],
-                    dE1_est           = two_state_fit.central.params_est["dE1"],
-                )
-                print(f"candidate t_min (t_zero={t_zero}): {t_min}")
-                if t_min is not None:
-                    candidate_tmins.append(t_min)
-
-            # ----------------------------------------------------------
-            # COLLAPSE: largest t_min over all accepted two-state fits
-            # ----------------------------------------------------------
-            if not candidate_tmins:
-                print(f"nsquare={nsquare}: no accepted two-state fit, skip one-state")
-                continue
-
-            t_min = max(candidate_tmins)
-            print(f"nsquare={nsquare}: collapsed t_min = {t_min} "
-                f"from candidates {sorted(candidate_tmins)}")
-
-            # ----------------------------------------------------------
-            # PHASE 2: single uncorrelated one-state production fit
-            # ----------------------------------------------------------
-            params_start = estimate_c2pt_starting_values(
-                c2pt_jkn = y,
-                t_start  = t_min,
-                t_final  = t_max,
-            )
-            params_start = exclude_keys(params_start, {"A1", "dE1"})
-            params_limit = {
-                "A0": (0, None),
-                "E0": (0, None),
-            }
-
-            fit_spec = {
-                **base_spec,
-                "correlation_type":     correlation_type,
-                "nsquare":              nsquare,
-                "execute_resample_fit": True,
-                "model_id":             "one-state-exp",
-                "t_start":              t_min,
-                "t_final":              t_max,
-                "bin_size":             bin_size,
-                "params_start":         params_start,
-                "params_limit":         params_limit,
-            }
-
-            one_state_fit = run_c2pt_fits(
-                t_start              = fit_spec["t_start"],
-                t_final              = fit_spec["t_final"],
-                y                    = y,
-                correlation_type     = fit_spec["correlation_type"],
-                resample_type        = fit_spec["resample_type"],
-                execute_central_fit  = fit_spec["execute_central_fit"],
-                execute_resample_fit = fit_spec["execute_resample_fit"],
-                model_id             = fit_spec["model_id"],
-                params_start         = fit_spec["params_start"],
-                params_limit         = fit_spec["params_limit"],
-                tolerance            = fit_spec["tolerance"],
-                strategy             = fit_spec["strategy"],
-                ncall                = fit_spec["ncall"],
-            )
-
-            fit_hash = make_fit_hash(fit_spec, hash_length)
-            fit_id   = make_c2pt_fit_id(fit_spec, hash_length)
-            result = fit_results(
-                run_id          = run.run_id,
-                fit_id          = fit_id,
-                fit_hash        = fit_hash,
-                fit_spec        = fit_spec,
-                central         = one_state_fit.central,
-                resample        = one_state_fit.resample,
-                resample_method = fit_spec["resample_type"],
-            )
-            path_one = save_fit(result, run_dir, fit_id)
-            print(f"binsize={bin_size}")
-            print(f"FIT RANGE ONE-STATE = [{t_min}, {t_max}]")
-            print_fit_summary("one-state", one_state_fit, path_one)
+                path_one = save_fit(result, run_dir, fit_id)
+                print(f"binsize={s}")
+                print(f"FIT RANGE ONE-STATE = [{t_min}, {t_max}]")
+                print_fit_summary("one-state", one_state_fit, path_one)

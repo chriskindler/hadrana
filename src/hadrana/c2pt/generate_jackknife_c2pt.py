@@ -35,7 +35,7 @@ def export_c2pt_jkn(ensemble: str, nsquares: list[int], bin_size: int):
             print()
 
 if __name__ == "__main__":
-    ensemble = "J501"
+    ensemble = "A654"
     momentum_shells = [0, 1, 2, 3, 4, 5, 6, 8]
 
     from hadrana.loader import load_rwfs
@@ -45,8 +45,9 @@ if __name__ == "__main__":
 
     binsizes = [1, 2, 4, 8, 16, 32, 64, maximum_binsize(ncfg)]
 
+    print(f"ENSEMBLE: {ensemble}")
     print(f"BINSIZES = {binsizes}")
-    print(f"maximum binsize = {np.max(binsizes)}")
+    print(f"MAXIMUM BINSIZE = {np.max(binsizes)}")
     
     for s in binsizes:
         print(f"binsize = {s}")
