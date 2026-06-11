@@ -46,7 +46,7 @@ if __name__ == "__main__":
     ncfg = 2012
 
     """
-    momentum_shells = [0]
+    momentum_shells = [0, 1, 2,3,4,5,6,8]
 
     from hadrana.loader import load_rwfs
 

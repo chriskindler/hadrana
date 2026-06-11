@@ -14,7 +14,7 @@ from chigrad.result import FitResult, FitRunResult
 
 log = logging.getLogger(__name__)
 
-Observable = Literal["c2pt", "c2pt_ratio", "ratio", "formfactor"]
+Observable = Literal["c2pt", "c2pt-ratio", "ratio", "formfactor", "binsize-energies"]
 
 class Run:
     def __init__(self, base_path: Path, ensemble: str, observable: Observable, run_id: str):
@@ -135,7 +135,7 @@ def make_fit_hash(fit_spec: dict, hash_length: int) -> str:
     canonical = json.dumps(fit_spec, sort_keys=True, default=str)
     return hashlib.sha1(canonical.encode()).hexdigest()[:hash_length]
 
-def make_c2pt_fit_id(fit_spec: dict, hash_length: int) -> str:
+def make_c2pt_fit_id(fit_spec: dict) -> str:
     """spec must contain: ensemble, t_zero, t_min, t_max, model_id,
     correlation_type, plus any optimizer settings.
     
@@ -186,11 +186,11 @@ DICT_KEYS = (
     "params_res", "params_err",
 )
 
-def save_fit(result: dict, run_dir: Path, fit_id: str) -> Path:
+def save_fit(result: dict, run_dir: Path, nsquare: int, fit_id: str) -> Path:
     """Write one fit's HDF5 artifact, sorted into /scalars, /arrays, /dicts."""
-    path = run_dir / f"{fit_id}.h5"
-    with h5py.File(path, "w") as f:
-
+    path = run_dir / f"nsquare{nsquare:02d}" 
+    path.mkdir(parents=True, exist_ok=True)
+    with h5py.File(path / f"{fit_id}.h5", "w") as f:
         # SCALARS
         scalars = f.create_group("scalars")
         for key in SCALAR_KEYS:

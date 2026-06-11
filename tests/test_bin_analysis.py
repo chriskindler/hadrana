@@ -198,40 +198,33 @@ if __name__ == "__main__":
         return float(factor * np.std([r.params_est[key] for r in fit.resample], ddof=ddof))
 
     ensemble      = "A650"
-    observable    = "c2pt"
+    observable    = "binsize-energies"
     resample_type = "jackknife"
 
-    momentum_shells = [0]
-    t_phys          = 0.3
-    t_start         = 2
-
+    t_phys        = 0.3
     snr_threshold = 0
     a_fm = 0.0
+    momentum_shells = []
     binsizes = []
+
     if ensemble == "D251":
-        binsizes      = [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
-        snr_threshold = 10
-        a_fm          = 0.064
+        binsizes        = [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+        momentum_shells = [0, 1, 2, 3, 4, 5, 6, 8]
+        snr_threshold   = 10
+        a_fm            = 0.064
 
     elif ensemble == "A650":
-        binsizes      = [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 30, 40, 50]
-        snr_threshold = 5
-        a_fm          = 0.098
-
-    run = Run.initialise(
-        base_path  = Path("/home/ck/phd/results"),
-        ensemble   = ensemble,
-        observable = observable,
-        label      = "nucleon-mass-run01",
-    )
-    run_dir     = run.create(exist_ok=True)
-
+        binsizes        = [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 30, 40, 50]
+        momentum_shells = [0, 1, 2, 3, 4, 5, 6, 8]
+        snr_threshold   = 5
+        a_fm            = 0.098
+    
     hash_length = 6
 
     base_spec = {
         "ensemble":                ensemble,
         "resample_type":           "jackknife",
-        "execute_central_fit":     True,
+        "execute_central_fit":     True, # for both central value and resample fits
         "starting_value_strategy": "data_driven",
         "tolerance":               1e-5,
         "strategy":                2,
@@ -242,6 +235,15 @@ if __name__ == "__main__":
 
     selection: dict[tuple[int, int], tuple[int, int]] = {}   # (nsquare, binsize) -> (t_min, t_max)
     records:   list[dict] = []                                   # one row per (n, s, t_zero)
+
+    run = Run.initialise(
+        base_path  = Path("/home/ck/phd/results"),
+        ensemble   = ensemble,
+        observable = observable,
+        label      = "binsize-energies-run04",
+    )
+
+    run_dir     = run.create(exist_ok=True)
 
     for n in momentum_shells:
         for s in binsizes:
@@ -313,7 +315,7 @@ if __name__ == "__main__":
                 )
 
                 fit_hash = make_fit_hash(fit_spec, hash_length)
-                fit_id   = make_c2pt_fit_id(fit_spec, hash_length)
+                fit_id   = make_c2pt_fit_id(fit_spec)
                 result = fit_results(
                     run_id          = run.run_id,
                     fit_id          = fit_id,
@@ -323,7 +325,7 @@ if __name__ == "__main__":
                     resample        = two_state_fit.resample,
                     resample_method = fit_spec["resample_type"],
                 )
-                path_two = save_fit(result, run_dir, fit_id)
+                path_two = save_fit(result, run_dir, n, fit_id)
                 acc = accept_two_state(two_state_fit)
                 print_fit_summary("two-state", two_state_fit, path=path_two, accepted=acc)
 
@@ -387,30 +389,36 @@ if __name__ == "__main__":
 
     summarise_selection(records, selection)
 
-    def best_accepted_record(records, n, s, key="chi2dof"):
-        """Accepted two-state record with smallest chi2/ndof for this (n, s); None if none."""
-        acc = [r for r in records
-               if r["nsquare"] == n and r["binsize"] == s and r["accepted"]
-               and r["t_min_candidate"] is not None]
-        return min(acc, key=lambda r: r[key]) if acc else None
+    mass_records = []
 
-    # ---- ONE-STATE GROUND-STATE EXTRACTION (uncorrelated) ----
-    mass_records = []   # one row per (n, s)
+    FALLBACK_TMIN_BY_ENSEMBLE = {"D251": 18, "A650": 10}
+    FALLBACK_TMIN = FALLBACK_TMIN_BY_ENSEMBLE[ensemble]
 
-    FIXED_WINDOW = (18, 39)
-
-    FIXED_WINDOW_BY_ENSEMBLE = {"D251": (18, 39), "A650": (10, 21)}
-    FIXED_WINDOW = FIXED_WINDOW_BY_ENSEMBLE[ensemble]
+    def select_window(records, n, s, fallback_tmin):
+        """Always return ((t_min, t_max), provenance) for (n, s).
+        Prefer accepted two-state seed; else best rejected seed; else fallback t_min.
+        t_max is taken from the (n,s) records (valid regardless of acceptance)."""
+        rows = [r for r in records if r["nsquare"] == n and r["binsize"] == s]
+        if not rows:
+            return None                       # no two-state ran at all -> genuinely skip
+        t_max    = rows[0]["t_max"]
+        with_seed = [r for r in rows if r["t_min_candidate"] is not None]
+        if with_seed:
+            accepted = [r for r in with_seed if r["accepted"]]
+            pool = accepted if accepted else with_seed
+            best = min(pool, key=lambda r: r["chi2dof"])
+            tag  = "accepted" if accepted else "rejected-best"
+            return (best["t_min_candidate"], t_max), tag
+        return (fallback_tmin, t_max), "fallback-tmin"
 
     for n in momentum_shells:
         for s in binsizes:
-            rec = best_accepted_record(records, n, s)
-            if rec is None:
-                print(f"nsquare={n} binsize={s}: no accepted two-state, skip one-state")
+            win = select_window(records, n, s, FALLBACK_TMIN)
+            if win is None:
+                print(f"nsquare={n} binsize={s}: no two-state records, skip")
                 continue
-
-            # t_min, t_max = rec["t_min_candidate"], rec["t_max"]
-            t_min, t_max = FIXED_WINDOW 
+            (t_min, t_max), prov = win
+            print(f"nsquare={n} binsize={s}: window [{t_min},{t_max}] ({prov})")
 
             c2pt_per_nsquare = load_c2pt_per_nsquare(ensemble, momentum_shells, s)
             jkn = c2pt_per_nsquare[n]
@@ -423,45 +431,31 @@ if __name__ == "__main__":
 
             fit_spec = {
                 **base_spec,
-                "binsize":              s,
-                "correlation_type":     "uncorrelated",
-                "nsquare":              n,
-                "execute_resample_fit": True,        # needed for jackknife error on E0
-                "model_id":             "one-state-exp",
-                "t_start":              t_min,
-                "t_final":              t_max,
-                "params_start":         params_start,
-                "params_limit":         params_limit,
+                "binsize": s, "correlation_type": "uncorrelated", "nsquare": n,
+                "execute_resample_fit": True, "model_id": "one-state-exp",
+                "t_start": t_min, "t_final": t_max,
+                "params_start": params_start, "params_limit": params_limit,
             }
 
             one_state_fit = run_c2pt_fits(
-                t_start              = fit_spec["t_start"],
-                t_final              = fit_spec["t_final"],
-                y                    = jkn,
-                correlation_type     = fit_spec["correlation_type"],
-                resample_type        = fit_spec["resample_type"],
-                execute_central_fit  = fit_spec["execute_central_fit"],
-                execute_resample_fit = fit_spec["execute_resample_fit"],
-                model_id             = fit_spec["model_id"],
-                params_start         = fit_spec["params_start"],
-                params_limit         = fit_spec["params_limit"],
-                tolerance            = fit_spec["tolerance"],
-                strategy             = fit_spec["strategy"],
-                ncall                = fit_spec["ncall"],
+                t_start=fit_spec["t_start"], t_final=fit_spec["t_final"], y=jkn,
+                correlation_type=fit_spec["correlation_type"],
+                resample_type=fit_spec["resample_type"],
+                execute_central_fit=fit_spec["execute_central_fit"],
+                execute_resample_fit=fit_spec["execute_resample_fit"],
+                model_id=fit_spec["model_id"], params_start=fit_spec["params_start"],
+                params_limit=fit_spec["params_limit"], tolerance=fit_spec["tolerance"],
+                strategy=fit_spec["strategy"], ncall=fit_spec["ncall"],
             )
 
             fit_hash = make_fit_hash(fit_spec, hash_length)
-            fit_id   = make_c2pt_fit_id(fit_spec, hash_length)
+            fit_id   = make_c2pt_fit_id(fit_spec)
             result   = fit_results(
-                run_id          = run.run_id,
-                fit_id          = fit_id,
-                fit_hash        = fit_hash,
-                fit_spec        = fit_spec,
-                central         = one_state_fit.central,
-                resample        = one_state_fit.resample,
-                resample_method = fit_spec["resample_type"],
+                run_id=run.run_id, fit_id=fit_id, fit_hash=fit_hash, fit_spec=fit_spec,
+                central=one_state_fit.central, resample=one_state_fit.resample,
+                resample_method=fit_spec["resample_type"],
             )
-            path_one = save_fit(result, run_dir, fit_id)
+            path_one = save_fit(result, run_dir, n, fit_id)      # always written now
             print_fit_summary("one-state", one_state_fit, path=path_one)
 
             c      = one_state_fit.central
@@ -469,22 +463,30 @@ if __name__ == "__main__":
             E0_err = jackknife_err(one_state_fit, "E0")
             mass_records.append({
                 "nsquare": n, "binsize": s, "t_min": t_min, "t_max": t_max,
+                "provenance": prov,                               # <-- keep provenance
                 "E0": E0, "E0_err": E0_err,
                 "chi2": float(c.chi2), "ndof": int(c.ndof),
                 "chi2dof": float(c.chi2 / c.ndof) if c.ndof > 0 else float("inf"),
                 "pvalue": float(c.pvalue),
-                "src_t_zero": rec["t_zero"], "src_chi2dof": rec["chi2dof"],
             })
 
     # ---- BINSIZE DEPENDENCE OF THE NUCLEON MASS ----
-    print("\n" + "=" * 84)
+    # ---- BINSIZE DEPENDENCE OF THE NUCLEON MASS ----
+    print("\n" + "=" * 92)
     print("NUCLEON MASS vs BINSIZE  (one-state, uncorrelated)")
-    print("=" * 84)
-    print(f" {'bin':>3} {'window':>9} {'E0':>12} {'E0_err':>10} {'chi2/ndof':>10} {'p':>6}  {'src t0':>6}  gvar")
+    print("=" * 92)
+    print(f" {'n2':>3} {'bin':>3} {'window':>9} {'E0':>12} {'E0_err':>10} "
+          f"{'chi2/ndof':>10} {'p':>6}  {'prov':>13}  gvar")
+    last_n = None
     for r in sorted(mass_records, key=lambda r: (r["nsquare"], r["binsize"])):
+        if last_n is not None and r["nsquare"] != last_n:
+            print()                                    # blank line between shells
+        last_n = r["nsquare"]
         win = f"[{r['t_min']},{r['t_max']}]"
-        print(f" {r['binsize']:>3} {win:>9} {r['E0']:12.6e} {r['E0_err']:10.3e} "
-              f"{r['chi2dof']:10.3f} {r['pvalue']:6.3f}  {r['src_t_zero']:>6}  {gv.gvar(r['E0'], r['E0_err'])}")
+        print(f" {r['nsquare']:>3} {r['binsize']:>3} {win:>9} "
+              f"{r['E0']:12.6e} {r['E0_err']:10.3e} "
+              f"{r['chi2dof']:10.3f} {r['pvalue']:6.3f}  "
+              f"{r['provenance']:>13}  {gv.gvar(r['E0'], r['E0_err'])}")
 
     # mass_report = {
     #     "ensemble":        ensemble,

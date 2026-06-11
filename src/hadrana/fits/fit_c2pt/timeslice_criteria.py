@@ -47,7 +47,7 @@ def estimate_c2pt_minimum_timeslice(
     """
         DESCRIPTION
             Determine lower bound of fit range
-            t_min in [t_0, t_max] with A0 * exp(-dE1 * t) <= c2pt_err(t) / 4
+            t_min in [t_0, t_max] with A1 * exp(-dE1 * t) <= c2pt_err(t) / 4
             
         INPUT
             c2pt_jkn_err: jackknife errors shape (n_t,)  
@@ -74,7 +74,6 @@ def estimate_c2pt_minimum_timeslice(
 
     minimum_timeslice = int(window[np.argmax(satisfied)])
     return minimum_timeslice
-
 
 def estimate_c2pt_ratio_minimum_timeslice(
     c2pt_ratio_jkn_err: np.ndarray,

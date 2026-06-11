@@ -24,3 +24,13 @@ test-run23
     correlated two-state fits to determine tmin
     same as test-run22, but with tphys = 0.45
         => more accepted t0
+
+binsize-energies-run03
+    binsizes     = [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20] 
+    max_binsize  = 20
+    snr_treshold = 10 
+    tphys        = 0.3 fm
+    a            = 0.064 fm
+
+binsize-energies-run04
+    same as run03 but uncorrelated two-state-fits
